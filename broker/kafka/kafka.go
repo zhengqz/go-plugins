@@ -2,9 +2,8 @@
 package kafka
 
 import (
-	"log"
-
 	"github.com/Shopify/sarama"
+	"github.com/micro/go-log"
 	"github.com/micro/go-micro/broker"
 	"github.com/micro/go-micro/broker/codec/json"
 	"github.com/micro/go-micro/cmd"
@@ -76,7 +75,14 @@ func (k *kBroker) Connect() error {
 		return nil
 	}
 
-	c, err := sarama.NewClient(k.addrs, sarama.NewConfig())
+	pconfig := sarama.NewConfig()
+	// For implementation reasons, the SyncProducer requires
+	// `Producer.Return.Errors` and `Producer.Return.Successes`
+	// to be set to true in its configuration.
+	pconfig.Producer.Return.Successes = true
+	pconfig.Producer.Return.Errors = true
+
+	c, err := sarama.NewClient(k.addrs, pconfig)
 	if err != nil {
 		return err
 	}
@@ -161,8 +167,12 @@ func (k *kBroker) Subscribe(topic string, handler broker.Handler, opts ...broker
 		for {
 			select {
 			case err := <-c.Errors():
-				log.Println("consumer error:", err)
+				log.Log("consumer error:", err)
 			case sm := <-c.Messages():
+				// ensure message is not nil
+				if sm == nil {
+					continue
+				}
 				var m broker.Message
 				if err := k.opts.Codec.Unmarshal(sm.Value, &m); err != nil {
 					continue

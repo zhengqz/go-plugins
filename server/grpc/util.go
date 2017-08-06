@@ -300,3 +300,14 @@ func convertCode(err error) codes.Code {
 	}
 	return codes.Unknown
 }
+
+func wait(ctx context.Context) bool {
+	if ctx == nil {
+		return false
+	}
+	wait, ok := ctx.Value("wait").(bool)
+	if !ok {
+		return false
+	}
+	return wait
+}
