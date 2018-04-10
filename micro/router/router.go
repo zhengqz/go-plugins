@@ -10,8 +10,9 @@ import (
 	"time"
 
 	"github.com/micro/cli"
-	"github.com/micro/go-os/config"
-	"github.com/micro/go-os/config/source/file"
+	"github.com/micro/go-config"
+	"github.com/micro/go-config/source"
+	"github.com/micro/go-config/source/file"
 	"github.com/micro/go-os/log"
 	"github.com/micro/micro/plugin"
 )
@@ -138,11 +139,9 @@ func (r *router) Init(ctx *cli.Context) error {
 	if c := ctx.String("config_source"); len(c) == 0 && r.opts.Config == nil {
 		return errors.New("config source must be defined")
 	} else if len(c) > 0 {
-		var source config.Source
+		var source source.Source
 
 		switch c {
-		case "platform":
-			source = config.NewSource()
 		case "file":
 			fileName := DefaultFile
 
@@ -152,7 +151,7 @@ func (r *router) Init(ctx *cli.Context) error {
 				fileName = parts[1]
 			}
 
-			source = file.NewSource(config.SourceName(fileName))
+			source = file.NewSource(file.WithPath(fileName))
 		default:
 			return errors.New("Unknown config source " + c)
 		}
