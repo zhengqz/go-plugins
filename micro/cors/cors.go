@@ -46,7 +46,12 @@ func (ac *allowedCors) Handler() plugin.Handler {
 		})
 
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			cors.AllowAll().ServeHTTP(w, r, hf)
+			cors.New(cors.Options{
+				AllowedOrigins:   ac.allowedOrigins,
+				AllowedMethods:   ac.allowedMethods,
+				AllowedHeaders:   ac.allowedHeaders,
+				AllowCredentials: true,
+			}).ServeHTTP(w, r, hf)
 		})
 	}
 }
