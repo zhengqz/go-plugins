@@ -27,14 +27,10 @@ Contents of this repository:
 | Broker    | PubSub messaging; NATS, NSQ, RabbitMQ, Kafka         |
 | Client    | RPC Clients; gRPC, HTTP                              |
 | Codec     | Message Encoding; BSON, Mercury                      |
-| KV        | Key-Value; Memcached, Redis                          |
-| Metrics   | Instrumentation; Statsd, Telegraf, Prometheus        |
 | Micro     | Micro Toolkit Plugins                                |
 | Registry  | Service Discovery; Etcd, Gossip, NATS                |
 | Selector  | Load balancing; Label, Cache, Static                 |
 | Server    | RPC Servers; gRPC, HTTP                              |
-| Sync      | Locking/Leadership election; Consul, Etcd            |
-| Trace     | Distributed Tracing; Zipkin                          |
 | Transport | Bidirectional Streaming; NATS, RabbitMQ              |
 | Wrappers  | Middleware; Circuit Breakers, Rate Limiting, Tracing |
 
