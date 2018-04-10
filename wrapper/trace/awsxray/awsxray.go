@@ -3,7 +3,7 @@ package awsxray
 
 import (
 	"context"
-	"github.com/micro/go-awsxray"
+	"github.com/asim/go-awsxray"
 	"github.com/micro/go-micro/client"
 	"github.com/micro/go-micro/server"
 )

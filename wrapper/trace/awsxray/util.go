@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"context"
-	"github.com/micro/go-awsxray"
+	"github.com/asim/go-awsxray"
 	"github.com/micro/go-micro/errors"
 	"github.com/micro/go-micro/metadata"
 )
