@@ -13,8 +13,8 @@ import (
 	"github.com/micro/go-config"
 	"github.com/micro/go-config/source"
 	"github.com/micro/go-config/source/file"
-	"github.com/micro/go-os/log"
 	"github.com/micro/micro/plugin"
+	"github.com/sirupsen/logrus"
 )
 
 type Option func(o *Options)
@@ -31,7 +31,7 @@ var (
 	// Default config source file
 	DefaultFile   = "routes.json"
 	DefaultPath   = []string{"api"}
-	DefaultLogger = log.NewLog(log.WithOutput(log.NewOutput(log.OutputName("/dev/stderr"))))
+	DefaultLogger = logrus.New()
 )
 
 func (r *router) update(routes Routes) {
