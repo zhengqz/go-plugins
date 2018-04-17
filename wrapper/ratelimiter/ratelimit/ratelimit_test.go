@@ -39,7 +39,12 @@ func TestRateClientLimit(t *testing.T) {
 			client.Wrap(NewClientWrapper(b, false)),
 		)
 
-		req := c.NewJsonRequest("test.service", "Test.Method", &TestRequest{})
+		req := c.NewRequest(
+			"test.service",
+			"Test.Method",
+			&TestRequest{},
+			client.WithContentType("application/json"),
+		)
 		rsp := TestResponse{}
 
 		for j := 0; j < limit; j++ {
@@ -95,7 +100,7 @@ func TestRateServerLimit(t *testing.T) {
 			t.Fatalf("Unexpected error registering server: %v", err)
 		}
 
-		req := c.NewJsonRequest(name, "Test.Method", &TestRequest{})
+		req := c.NewRequest(name, "Test.Method", &TestRequest{}, client.WithContentType("application/json"))
 		rsp := TestResponse{}
 
 		for j := 0; j < limit; j++ {

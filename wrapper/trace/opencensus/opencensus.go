@@ -56,7 +56,7 @@ func (w *clientWrapper) Call(
 }
 
 // Publish implements client.Client.Publish.
-func (w *clientWrapper) Publish(ctx context.Context, p client.Publication, opts ...client.PublishOption) (err error) {
+func (w *clientWrapper) Publish(ctx context.Context, p client.Message, opts ...client.PublishOption) (err error) {
 	t := newPublicationTracker(p, ClientProfile)
 	ctx = t.start(ctx, true)
 
@@ -137,7 +137,7 @@ func NewHandlerWrapper() server.HandlerWrapper {
 // that adds tracing to subscription requests.
 func NewSubscriberWrapper() server.SubscriberWrapper {
 	return func(fn server.SubscriberFunc) server.SubscriberFunc {
-		return func(ctx context.Context, p server.Publication) (err error) {
+		return func(ctx context.Context, p server.Message) (err error) {
 			t := newPublicationTracker(p, ServerProfile)
 			ctx = t.start(ctx, false)
 

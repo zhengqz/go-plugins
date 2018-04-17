@@ -23,9 +23,9 @@ func TestBreaker(t *testing.T) {
 		client.Wrap(NewClientWrapper()),
 	)
 
-	req := c.NewJsonRequest("test.service", "Test.Method", map[string]string{
+	req := c.NewRequest("test.service", "Test.Method", map[string]string{
 		"foo": "bar",
-	})
+	}, client.WithContentType("application/json"))
 
 	var rsp map[string]interface{}
 

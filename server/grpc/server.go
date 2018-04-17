@@ -97,7 +97,7 @@ func prepareMethod(method reflect.Method) *methodType {
 
 	if stream {
 		// check stream type
-		streamType := reflect.TypeOf((*server.Streamer)(nil)).Elem()
+		streamType := reflect.TypeOf((*server.Stream)(nil)).Elem()
 		if !argType.Implements(streamType) {
 			log.Log(mname, "argument does not implement Streamer interface:", argType)
 			return nil

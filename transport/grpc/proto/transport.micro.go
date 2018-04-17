@@ -80,7 +80,7 @@ type Transport_StreamService interface {
 }
 
 type transportStreamService struct {
-	stream client.Streamer
+	stream client.Stream
 }
 
 func (x *transportStreamService) Close() error {
@@ -122,7 +122,7 @@ type Transport struct {
 	TransportHandler
 }
 
-func (h *Transport) Stream(ctx context.Context, stream server.Streamer) error {
+func (h *Transport) Stream(ctx context.Context, stream server.Stream) error {
 	return h.TransportHandler.Stream(ctx, &transportStreamStream{stream})
 }
 
@@ -135,7 +135,7 @@ type Transport_StreamStream interface {
 }
 
 type transportStreamStream struct {
-	stream server.Streamer
+	stream server.Stream
 }
 
 func (x *transportStreamStream) Close() error {
