@@ -51,6 +51,27 @@ func (g *grpcClient) secure() grpc.DialOption {
 	return grpc.WithInsecure()
 }
 
+func (g *grpcClient) next(request client.Request, opts client.CallOptions) (selector.Next, error) {
+	// return remote address
+	if len(opts.Address) > 0 {
+		return func() (*registry.Node, error) {
+			return &registry.Node{
+				Address: opts.Address,
+			}, nil
+		}, nil
+	}
+
+	// get next nodes from the selector
+	next, err := g.opts.Selector.Select(request.Service(), opts.SelectOptions...)
+	if err != nil && err == selector.ErrNotFound {
+		return nil, errors.NotFound("go.micro.client", err.Error())
+	} else if err != nil {
+		return nil, errors.InternalServerError("go.micro.client", err.Error())
+	}
+
+	return next, nil
+}
+
 func (g *grpcClient) call(ctx context.Context, address string, req client.Request, rsp interface{}, opts client.CallOptions) error {
 	header := make(map[string]string)
 	if md, ok := metadata.FromContext(ctx); ok {
@@ -191,14 +212,6 @@ func (g *grpcClient) NewRequest(service, method string, req interface{}, reqOpts
 	return newGRPCRequest(service, method, req, g.opts.ContentType, reqOpts...)
 }
 
-func (g *grpcClient) NewProtoRequest(service, method string, req interface{}, reqOpts ...client.RequestOption) client.Request {
-	return newGRPCRequest(service, method, req, "application/grpc+proto", reqOpts...)
-}
-
-func (g *grpcClient) NewJsonRequest(service, method string, req interface{}, reqOpts ...client.RequestOption) client.Request {
-	return newGRPCRequest(service, method, req, "application/grpc+json", reqOpts...)
-}
-
 func (g *grpcClient) Call(ctx context.Context, req client.Request, rsp interface{}, opts ...client.CallOption) error {
 	// make a copy of call opts
 	callOpts := g.opts.CallOptions
@@ -206,12 +219,9 @@ func (g *grpcClient) Call(ctx context.Context, req client.Request, rsp interface
 		opt(&callOpts)
 	}
 
-	// get next nodes from the selector
-	next, err := g.opts.Selector.Select(req.Service(), callOpts.SelectOptions...)
-	if err != nil && err == selector.ErrNotFound {
-		return errors.NotFound("go.micro.client", err.Error())
-	} else if err != nil {
-		return errors.InternalServerError("go.micro.client", err.Error())
+	next, err := g.next(req, callOpts)
+	if err != nil {
+		return err
 	}
 
 	// check if we already have a deadline
@@ -307,14 +317,6 @@ func (g *grpcClient) Call(ctx context.Context, req client.Request, rsp interface
 	return gerr
 }
 
-func (g *grpcClient) CallRemote(ctx context.Context, addr string, req client.Request, rsp interface{}, opts ...client.CallOption) error {
-	callOpts := g.opts.CallOptions
-	for _, opt := range opts {
-		opt(&callOpts)
-	}
-	return g.call(ctx, addr, req, rsp, callOpts)
-}
-
 func (g *grpcClient) Stream(ctx context.Context, req client.Request, opts ...client.CallOption) (client.Stream, error) {
 	// make a copy of call opts
 	callOpts := g.opts.CallOptions
@@ -322,12 +324,9 @@ func (g *grpcClient) Stream(ctx context.Context, req client.Request, opts ...cli
 		opt(&callOpts)
 	}
 
-	// get next nodes from the selector
-	next, err := g.opts.Selector.Select(req.Service(), callOpts.SelectOptions...)
-	if err != nil && err == selector.ErrNotFound {
-		return nil, errors.NotFound("go.micro.client", err.Error())
-	} else if err != nil {
-		return nil, errors.InternalServerError("go.micro.client", err.Error())
+	next, err := g.next(req, callOpts)
+	if err != nil {
+		return nil, err
 	}
 
 	// check if we already have a deadline
@@ -415,14 +414,6 @@ func (g *grpcClient) Stream(ctx context.Context, req client.Request, opts ...cli
 	}
 
 	return nil, grr
-}
-
-func (g *grpcClient) StreamRemote(ctx context.Context, addr string, req client.Request, opts ...client.CallOption) (client.Stream, error) {
-	callOpts := g.opts.CallOptions
-	for _, opt := range opts {
-		opt(&callOpts)
-	}
-	return g.stream(ctx, addr, req, callOpts)
 }
 
 func (g *grpcClient) Publish(ctx context.Context, p client.Message, opts ...client.PublishOption) error {
