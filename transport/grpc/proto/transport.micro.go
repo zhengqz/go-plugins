@@ -17,9 +17,9 @@ import fmt "fmt"
 import math "math"
 
 import (
-	context "context"
 	client "github.com/micro/go-micro/client"
 	server "github.com/micro/go-micro/server"
+	context "context"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -45,30 +45,30 @@ type TransportService interface {
 }
 
 type transportService struct {
-	c           client.Client
-	serviceName string
+	c    client.Client
+	name string
 }
 
-func TransportServiceClient(serviceName string, c client.Client) TransportService {
+func NewTransportService(name string, c client.Client) TransportService {
 	if c == nil {
 		c = client.NewClient()
 	}
-	if len(serviceName) == 0 {
-		serviceName = "go.micro.grpc.transport"
+	if len(name) == 0 {
+		name = "go.micro.grpc.transport"
 	}
 	return &transportService{
-		c:           c,
-		serviceName: serviceName,
+		c:    c,
+		name: name,
 	}
 }
 
 func (c *transportService) Stream(ctx context.Context, opts ...client.CallOption) (Transport_StreamService, error) {
-	req := c.c.NewRequest(c.serviceName, "Transport.Stream", &Message{})
+	req := c.c.NewRequest(c.name, "Transport.Stream", &Message{})
 	stream, err := c.c.Stream(ctx, req, opts...)
 	if err != nil {
 		return nil, err
 	}
-	return &transportStreamService{stream}, nil
+	return &transportServiceStream{stream}, nil
 }
 
 type Transport_StreamService interface {
@@ -79,27 +79,27 @@ type Transport_StreamService interface {
 	Recv() (*Message, error)
 }
 
-type transportStreamService struct {
+type transportServiceStream struct {
 	stream client.Stream
 }
 
-func (x *transportStreamService) Close() error {
+func (x *transportServiceStream) Close() error {
 	return x.stream.Close()
 }
 
-func (x *transportStreamService) SendMsg(m interface{}) error {
+func (x *transportServiceStream) SendMsg(m interface{}) error {
 	return x.stream.Send(m)
 }
 
-func (x *transportStreamService) RecvMsg(m interface{}) error {
+func (x *transportServiceStream) RecvMsg(m interface{}) error {
 	return x.stream.Recv(m)
 }
 
-func (x *transportStreamService) Send(m *Message) error {
+func (x *transportServiceStream) Send(m *Message) error {
 	return x.stream.Send(m)
 }
 
-func (x *transportStreamService) Recv() (*Message, error) {
+func (x *transportServiceStream) Recv() (*Message, error) {
 	m := new(Message)
 	err := x.stream.Recv(m)
 	if err != nil {
@@ -115,14 +115,21 @@ type TransportHandler interface {
 }
 
 func RegisterTransportHandler(s server.Server, hdlr TransportHandler, opts ...server.HandlerOption) {
-	s.Handle(s.NewHandler(&Transport{hdlr}, opts...))
+	type transport interface {
+		Stream(ctx context.Context, stream server.Stream) error
+	}
+	type Transport struct {
+		transport
+	}
+	h := &transportHandler{hdlr}
+	s.Handle(s.NewHandler(&Transport{h}, opts...))
 }
 
-type Transport struct {
+type transportHandler struct {
 	TransportHandler
 }
 
-func (h *Transport) Stream(ctx context.Context, stream server.Stream) error {
+func (h *transportHandler) Stream(ctx context.Context, stream server.Stream) error {
 	return h.TransportHandler.Stream(ctx, &transportStreamStream{stream})
 }
 
