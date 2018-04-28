@@ -17,9 +17,13 @@ type bytesCodec struct{}
 
 var (
 	defaultGRPCCodecs = map[string]grpc.Codec{
-		"application/grpc+json":  jsonCodec{},
-		"application/grpc+proto": protoCodec{},
-		"application/grpc+bytes": bytesCodec{},
+		"application/json":         jsonCodec{},
+		"application/proto":        protoCodec{},
+		"application/protobuf":     protoCodec{},
+		"application/octet-stream": protoCodec{},
+		"application/grpc+json":    jsonCodec{},
+		"application/grpc+proto":   protoCodec{},
+		"application/grpc+bytes":   bytesCodec{},
 	}
 
 	defaultRPCCodecs = map[string]codec.NewCodec{
