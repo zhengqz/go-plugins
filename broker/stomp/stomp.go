@@ -20,6 +20,27 @@ type rbroker struct {
 	stompConn *stomp.Conn
 }
 
+// stompHeaderToMap converts STOMP header to broker friendly header
+func stompHeaderToMap(h *frame.Header) map[string]string {
+	m := map[string]string{}
+	for i := 0; i < h.Len(); i++ {
+		k, v := h.GetAt(i)
+		m[k] = v
+	}
+	return m
+}
+
+// defaults sets 'sane' STOMP default
+func (r *rbroker) defaults() {
+	ConnectTimeout(30 * time.Second)(&r.opts)
+	VirtualHost("/")(&r.opts)
+}
+
+// init registers the STOMP broker
+func init() {
+	cmd.DefaultBrokers["stomp"] = NewBroker
+}
+
 func (r *rbroker) Options() broker.Options {
 	if r.opts.Context == nil {
 		r.opts.Context = context.Background()
@@ -88,12 +109,6 @@ func (r *rbroker) Disconnect() error {
 	return r.stompConn.Disconnect()
 }
 
-// defaults sets 'sane' STOMP default
-func (r *rbroker) defaults() {
-	ConnectTimeout(30 * time.Second)(&r.opts)
-	VirtualHost("/")(&r.opts)
-}
-
 func (r *rbroker) Init(opts ...broker.Option) error {
 	r.defaults()
 
@@ -136,16 +151,6 @@ func (r *rbroker) Publish(topic string, msg *broker.Message, opts ...broker.Publ
 	}
 
 	return nil
-}
-
-// stompHeaderToMap convert STOMP header to broker friendly header
-func stompHeaderToMap(h *frame.Header) map[string]string {
-	m := map[string]string{}
-	for i := 0; i < h.Len(); i++ {
-		k, v := h.GetAt(i)
-		m[k] = v
-	}
-	return m
 }
 
 func (r *rbroker) Subscribe(topic string, handler broker.Handler, opts ...broker.SubscribeOption) (broker.Subscriber, error) {
@@ -209,13 +214,11 @@ func (r *rbroker) Subscribe(topic string, handler broker.Handler, opts ...broker
 }
 
 func (r *rbroker) String() string {
-	return fmt.Sprintf("[STOMP on %s with opts: %v]",
-		r.Address(),
-		r.Options())
+	return "stomp"
 }
 
-// NewStompBroker returns a STOMP broker
-func NewStompBroker(opts ...broker.Option) broker.Broker {
+// NewBroker returns a STOMP broker
+func NewBroker(opts ...broker.Option) broker.Broker {
 	r := &rbroker{
 		opts: broker.Options{
 			Context: context.Background(),
@@ -225,9 +228,4 @@ func NewStompBroker(opts ...broker.Option) broker.Broker {
 	r.Init(opts...)
 
 	return r
-}
-
-// Register the STOMP broker
-func init() {
-	cmd.DefaultBrokers["stomp"] = NewStompBroker
 }
