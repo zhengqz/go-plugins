@@ -8,7 +8,6 @@ import (
 type subscriber struct {
 	opts  broker.SubscribeOptions
 	topic string
-	// Stomp subscription
 	sub *stomp.Subscription
 }
 

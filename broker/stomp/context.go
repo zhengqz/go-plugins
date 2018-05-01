@@ -7,26 +7,19 @@ import (
 )
 
 // Context related keys and funcs
-
-type subscribeHeaderKey struct{}
-
-type durableQueueKey struct{}
-
-type receiptKey struct{}
-
-type suppressContentLengthKey struct{}
-
-type connectTimeoutKey struct{}
-
 type authKey struct{}
+type connectHeaderKey struct{}
+type connectTimeoutKey struct{}
+type durableQueueKey struct{}
+type receiptKey struct{}
+type subscribeHeaderKey struct{}
+type suppressContentLengthKey struct{}
+type vHostKey struct{}
+
 type authRecord struct {
 	username string
 	password string
 }
-
-type vHostKey struct{}
-
-type connectHeaderKey struct{}
 
 // setSubscribeOption returns a function to setup a context with given value
 func setSubscribeOption(k, v interface{}) broker.SubscribeOption {
