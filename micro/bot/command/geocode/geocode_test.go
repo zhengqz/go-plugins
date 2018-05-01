@@ -2,12 +2,18 @@ package geocode
 
 import (
 	"fmt"
+	"os"
 	"strconv"
 	"strings"
 	"testing"
 )
 
 func TestGeocode(t *testing.T) {
+	// skip on travis
+	if tr := os.Getenv("TRAVIS"); len(tr) > 0 {
+		return
+	}
+
 	testData := []struct {
 		address  string
 		response [2]string
