@@ -34,12 +34,12 @@
 package grpc
 
 import (
-	"bytes"
 	"context"
 	"io"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/encoding"
 	"google.golang.org/grpc/transport"
 
 	"github.com/micro/go-micro/server"
@@ -49,11 +49,9 @@ import (
 type rpcStream struct {
 	t          transport.ServerTransport
 	s          *transport.Stream
-	p          *parser
-	codec      grpc.Codec
+	codec      encoding.Codec
 	cp         grpc.Compressor
 	dc         grpc.Decompressor
-	cbuf       *bytes.Buffer
 	maxMsgSize int
 	statusCode codes.Code
 	statusDesc string
@@ -79,24 +77,19 @@ func (r *rpcStream) Context() context.Context {
 }
 
 func (r *rpcStream) Send(m interface{}) (err error) {
-	hd, out, err := encode(r.codec, m, r.cp, r.cbuf, nil)
-	defer func() {
-		if r.cbuf != nil {
-			r.cbuf.Reset()
-		}
-	}()
+	out, err := encode(r.codec, m, r.cp, nil, nil)
 	if err != nil {
 		err = Errorf(codes.Internal, "grpc: %v", err)
 		return err
 	}
-	if err := r.t.Write(r.s, hd, out, &transport.Options{Last: false}); err != nil {
+	if err := r.t.Write(r.s, out, &transport.Options{Last: false}); err != nil {
 		return toRPCErr(err)
 	}
 	return nil
 }
 
 func (r *rpcStream) Recv(m interface{}) (err error) {
-	if err := recv(r.p, r.codec, r.s, r.dc, m, r.maxMsgSize); err != nil {
+	if err := recv(r.codec, r.s, r.dc, m, r.maxMsgSize, nil, nil); err != nil {
 		if err == io.EOF {
 			return err
 		}
