@@ -7,7 +7,7 @@ import (
 	"github.com/micro/go-micro/codec"
 	"github.com/micro/go-micro/codec/jsonrpc"
 	"github.com/micro/go-micro/codec/protorpc"
-	"google.golang.org/grpc/encoding"
+	"google.golang.org/grpc"
 )
 
 type jsonCodec struct{}
@@ -15,7 +15,7 @@ type protoCodec struct{}
 type bytesCodec struct{}
 
 var (
-	defaultGRPCCodecs = map[string]encoding.Codec{
+	defaultGRPCCodecs = map[string]grpc.Codec{
 		"application/json":         jsonCodec{},
 		"application/proto":        protoCodec{},
 		"application/protobuf":     protoCodec{},
@@ -43,7 +43,7 @@ func (protoCodec) Unmarshal(data []byte, v interface{}) error {
 	return proto.Unmarshal(data, v.(proto.Message))
 }
 
-func (protoCodec) Name() string {
+func (protoCodec) String() string {
 	return "proto"
 }
 
@@ -55,6 +55,6 @@ func (jsonCodec) Unmarshal(data []byte, v interface{}) error {
 	return json.Unmarshal(data, v)
 }
 
-func (jsonCodec) Name() string {
+func (jsonCodec) String() string {
 	return "json"
 }

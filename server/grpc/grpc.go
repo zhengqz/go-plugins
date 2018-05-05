@@ -26,9 +26,9 @@ import (
 	"github.com/micro/util/go/lib/addr"
 	mgrpc "github.com/micro/util/go/lib/grpc"
 
+	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials"
-	"google.golang.org/grpc/encoding"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 	"google.golang.org/grpc/transport"
@@ -249,17 +249,18 @@ func (g *grpcServer) serveStream(t transport.ServerTransport, stream *transport.
 	g.processStream(t, stream, service, mtype, codec, ct, ctx)
 }
 
-func (g *grpcServer) sendResponse(t transport.ServerTransport, stream *transport.Stream, msg interface{}, codec encoding.Codec, opts *transport.Options) error {
-	p, err := encode(codec, msg, nil, nil, nil)
+func (g *grpcServer) sendResponse(t transport.ServerTransport, stream *transport.Stream, msg interface{}, codec grpc.Codec, opts *transport.Options) error {
+	hd, p, err := encode(codec, msg, nil, nil, nil)
 	if err != nil {
 		log.Fatalf("grpc: Server failed to encode response %v", err)
 	}
-	return t.Write(stream, p, opts)
+	return t.Write(stream, hd, p, opts)
 }
 
-func (g *grpcServer) processRequest(t transport.ServerTransport, stream *transport.Stream, service *service, mtype *methodType, codec encoding.Codec, ct string, ctx context.Context) (err error) {
+func (g *grpcServer) processRequest(t transport.ServerTransport, stream *transport.Stream, service *service, mtype *methodType, codec grpc.Codec, ct string, ctx context.Context) (err error) {
+	p := &parser{r: stream}
 	for {
-		isCompressed, req, err := recvMsg(stream, defaultMaxMsgSize)
+		pf, req, err := p.recvMsg(defaultMaxMsgSize)
 		if err == io.EOF {
 			// The entire stream is done (for unary RPC only).
 			return err
@@ -285,13 +286,19 @@ func (g *grpcServer) processRequest(t transport.ServerTransport, stream *transpo
 			return err
 		}
 
-		if isCompressed {
-			if err := checkRecvPayload(stream.RecvCompress(), false); err != nil {
-				if err := t.WriteStatus(stream, err); err != nil {
+		if err := checkRecvPayload(pf, stream.RecvCompress(), nil); err != nil {
+			switch err := err.(type) {
+			case *rpcError:
+				if err := t.WriteStatus(stream, status.New(err.code, err.desc)); err != nil {
 					log.Logf("grpc: Server.processUnaryRPC failed to write status %v", err)
 				}
-				return err.Err()
+			default:
+				if err := t.WriteStatus(stream, status.New(codes.Internal, err.Error())); err != nil {
+					log.Logf("grpc: Server.processUnaryRPC failed to write status %v", err)
+				}
+
 			}
+			return err
 		}
 
 		// status code/desc
@@ -401,7 +408,7 @@ func (g *grpcServer) processRequest(t transport.ServerTransport, stream *transpo
 	}
 }
 
-func (g *grpcServer) processStream(t transport.ServerTransport, stream *transport.Stream, service *service, mtype *methodType, codec encoding.Codec, ct string, ctx context.Context) (err error) {
+func (g *grpcServer) processStream(t transport.ServerTransport, stream *transport.Stream, service *service, mtype *methodType, codec grpc.Codec, ct string, ctx context.Context) (err error) {
 	opts := g.opts
 
 	r := &rpcRequest{
@@ -415,6 +422,7 @@ func (g *grpcServer) processStream(t transport.ServerTransport, stream *transpor
 		request:    r,
 		t:          t,
 		s:          stream,
+		p:          &parser{r: stream},
 		codec:      codec,
 		maxMsgSize: defaultMaxMsgSize,
 	}
@@ -456,11 +464,11 @@ func (g *grpcServer) processStream(t transport.ServerTransport, stream *transpor
 	return t.WriteStatus(ss.s, status.New(ss.statusCode, ss.statusDesc))
 }
 
-func (g *grpcServer) newGRPCCodec(contentType string) (encoding.Codec, error) {
-	codecs := make(map[string]encoding.Codec)
+func (g *grpcServer) newGRPCCodec(contentType string) (grpc.Codec, error) {
+	codecs := make(map[string]grpc.Codec)
 	if g.opts.Context != nil {
 		if v := g.opts.Context.Value(codecsKey{}); v != nil {
-			codecs = v.(map[string]encoding.Codec)
+			codecs = v.(map[string]grpc.Codec)
 		}
 	}
 	if c, ok := codecs[contentType]; ok {
