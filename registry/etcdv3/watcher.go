@@ -1,13 +1,12 @@
 package etcdv3
 
 import (
+	"context"
 	"errors"
-	"path"
 	"time"
 
 	"github.com/coreos/etcd/clientv3"
 	"github.com/micro/go-micro/registry"
-	"golang.org/x/net/context"
 )
 
 type etcdv3Watcher struct {
@@ -17,7 +16,12 @@ type etcdv3Watcher struct {
 	timeout time.Duration
 }
 
-func newEtcdv3Watcher(r *etcdv3Registry, timeout time.Duration) (registry.Watcher, error) {
+func newEtcdv3Watcher(r *etcdv3Registry, timeout time.Duration, opts ...registry.WatchOption) (registry.Watcher, error) {
+	var wo registry.WatchOptions
+	for _, o := range opts {
+		o(&wo)
+	}
+
 	ctx, cancel := context.WithCancel(context.Background())
 	stop := make(chan bool, 1)
 
@@ -26,9 +30,14 @@ func newEtcdv3Watcher(r *etcdv3Registry, timeout time.Duration) (registry.Watche
 		cancel()
 	}()
 
+	watchPath := prefix
+	if len(wo.Service) > 0 {
+		watchPath = servicePath(wo.Service) + "/"
+	}
+
 	return &etcdv3Watcher{
 		stop:    stop,
-		w:       r.client.Watch(ctx, prefix, clientv3.WithPrefix()),
+		w:       r.client.Watch(ctx, watchPath, clientv3.WithPrefix(), clientv3.WithPrevKV()),
 		client:  r.client,
 		timeout: timeout,
 	}, nil
@@ -53,20 +62,10 @@ func (ew *etcdv3Watcher) Next() (*registry.Result, error) {
 			case clientv3.EventTypeDelete:
 				action = "delete"
 
-				// get the cached value
-				ctx, cancel := context.WithTimeout(context.Background(), ew.timeout)
-				defer cancel()
-
-				resp, err := ew.client.Get(ctx, path.Join(cachePrefix, string(ev.Kv.Key)))
-				if err != nil {
-					return nil, err
-				}
-
-				for _, ev := range resp.Kvs {
-					service = decode(ev.Value)
-				}
-
+				// get service from prevKv
+				service = decode(ev.PrevKv.Value)
 			}
+
 			if service == nil {
 				continue
 			}

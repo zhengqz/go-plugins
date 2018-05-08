@@ -2,6 +2,7 @@
 package etcdv3
 
 import (
+	"context"
 	"crypto/tls"
 	"encoding/json"
 	"errors"
@@ -10,18 +11,16 @@ import (
 	"sync"
 	"time"
 
-	"golang.org/x/net/context"
-
 	"github.com/coreos/etcd/clientv3"
 	"github.com/micro/go-micro/cmd"
 	"github.com/micro/go-micro/registry"
 
+	"github.com/coreos/etcd/etcdserver/api/v3rpc/rpctypes"
 	hash "github.com/mitchellh/hashstructure"
 )
 
 var (
-	prefix      = "/micro-registry"
-	cachePrefix = "/micro-cache"
+	prefix = "/micro-registry"
 )
 
 type etcdv3Registry struct {
@@ -57,6 +56,10 @@ func servicePath(s string) string {
 	return path.Join(prefix, strings.Replace(s, "/", "-", -1))
 }
 
+func (e *etcdv3Registry) Options() registry.Options {
+	return e.options
+}
+
 func (e *etcdv3Registry) Deregister(s *registry.Service) error {
 	if len(s.Nodes) == 0 {
 		return errors.New("Require at least one node")
@@ -73,24 +76,7 @@ func (e *etcdv3Registry) Deregister(s *registry.Service) error {
 	defer cancel()
 
 	for _, node := range s.Nodes {
-		// cache the value for the watcher
-		resp, err := e.client.Get(ctx, nodePath(s.Name, node.Id))
-		if err != nil {
-			return err
-		}
-
-		for _, ev := range resp.Kvs {
-			lrsp, err := e.client.Grant(ctx, 5)
-			if err != nil {
-				return err
-			}
-			_, err = e.client.Put(ctx, path.Join(cachePrefix, string(ev.Key)), string(ev.Value), clientv3.WithLease(lrsp.ID))
-			if err != nil {
-				return err
-			}
-		}
-
-		_, err = e.client.Delete(ctx, nodePath(s.Name, node.Id))
+		_, err := e.client.Delete(ctx, nodePath(s.Name, node.Id))
 		if err != nil {
 			return err
 		}
@@ -103,17 +89,18 @@ func (e *etcdv3Registry) Register(s *registry.Service, opts ...registry.Register
 		return errors.New("Require at least one node")
 	}
 
+	var leaseNotFound bool
 	//refreshing lease if existing
 	leaseID, ok := e.leases[s.Name]
 	if ok {
 		if _, err := e.client.KeepAliveOnce(context.TODO(), leaseID); err != nil {
-			return err
-		}
-	}
+			if err != rpctypes.ErrLeaseNotFound {
+				return err
+			}
 
-	var options registry.RegisterOptions
-	for _, o := range opts {
-		o(&options)
+			// lease not found do register
+			leaseNotFound = true
+		}
 	}
 
 	// create hash of service; uint64
@@ -128,7 +115,7 @@ func (e *etcdv3Registry) Register(s *registry.Service, opts ...registry.Register
 	e.Unlock()
 
 	// the service is unchanged, skip registering
-	if ok && v == h {
+	if ok && v == h && !leaseNotFound {
 		return nil
 	}
 
@@ -137,6 +124,11 @@ func (e *etcdv3Registry) Register(s *registry.Service, opts ...registry.Register
 		Version:   s.Version,
 		Metadata:  s.Metadata,
 		Endpoints: s.Endpoints,
+	}
+
+	var options registry.RegisterOptions
+	for _, o := range opts {
+		o(&options)
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), e.options.Timeout)
@@ -245,8 +237,8 @@ func (e *etcdv3Registry) ListServices() ([]*registry.Service, error) {
 	return services, nil
 }
 
-func (e *etcdv3Registry) Watch() (registry.Watcher, error) {
-	return newEtcdv3Watcher(e, e.options.Timeout)
+func (e *etcdv3Registry) Watch(opts ...registry.WatchOption) (registry.Watcher, error) {
+	return newEtcdv3Watcher(e, e.options.Timeout, opts...)
 }
 
 func (e *etcdv3Registry) String() string {

@@ -2,15 +2,16 @@ package utp
 
 import (
 	"bufio"
+	"context"
 	"crypto/tls"
 	"encoding/gob"
 	"net"
 
 	"github.com/anacrolix/utp"
 	"github.com/micro/go-micro/transport"
-	maddr "github.com/micro/misc/lib/addr"
-	mnet "github.com/micro/misc/lib/net"
-	mls "github.com/micro/misc/lib/tls"
+	maddr "github.com/micro/util/go/lib/addr"
+	mnet "github.com/micro/util/go/lib/net"
+	mls "github.com/micro/util/go/lib/tls"
 )
 
 func (u *utpTransport) Dial(addr string, opts ...transport.DialOption) (transport.Client, error) {
@@ -22,7 +23,8 @@ func (u *utpTransport) Dial(addr string, opts ...transport.DialOption) (transpor
 		opt(&dopts)
 	}
 
-	c, err := utp.DialTimeout(addr, dopts.Timeout)
+	ctx, _ := context.WithTimeout(context.Background(), dopts.Timeout)
+	c, err := utp.DialContext(ctx, addr)
 	if err != nil {
 		return nil, err
 	}
