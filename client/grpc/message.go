@@ -10,7 +10,16 @@ type grpcPublication struct {
 	payload     interface{}
 }
 
-func newGRPCPublication(topic string, payload interface{}, contentType string) client.Message {
+func newGRPCPublication(topic string, payload interface{}, contentType string, opts ...client.MessageOption) client.Message {
+	var options client.MessageOptions
+	for _, o := range opts {
+		o(&options)
+	}
+
+	if len(options.ContentType) > 0 {
+		contentType = options.ContentType
+	}
+
 	return &grpcPublication{
 		payload:     payload,
 		topic:       topic,

@@ -204,7 +204,7 @@ func (g *grpcClient) Options() client.Options {
 	return g.opts
 }
 
-func (g *grpcClient) NewMessage(topic string, msg interface{}) client.Message {
+func (g *grpcClient) NewMessage(topic string, msg interface{}, opts ...client.MessageOption) client.Message {
 	return newGRPCPublication(topic, msg, "application/octet-stream")
 }
 
