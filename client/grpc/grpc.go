@@ -194,9 +194,18 @@ func (g *grpcClient) newCodec(contentType string) (codec.NewCodec, error) {
 }
 
 func (g *grpcClient) Init(opts ...client.Option) error {
+	size := g.opts.PoolSize
+	ttl := g.opts.PoolTTL
+
 	for _, o := range opts {
 		o(&g.opts)
 	}
+
+	// recreate the pool if the options changed
+	if size != g.opts.PoolSize || ttl != g.opts.PoolTTL {
+		g.pool = newPool(g.opts.PoolSize, g.opts.PoolTTL)
+	}
+
 	return nil
 }
 
@@ -457,6 +466,7 @@ func newClient(opts ...client.Option) client.Client {
 			RequestTimeout: client.DefaultRequestTimeout,
 			DialTimeout:    transport.DefaultDialTimeout,
 		},
+		PoolTTL: client.DefaultPoolTTL,
 	}
 
 	for _, o := range opts {
