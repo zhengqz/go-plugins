@@ -201,9 +201,12 @@ func (g *grpcClient) Init(opts ...client.Option) error {
 		o(&g.opts)
 	}
 
-	// recreate the pool if the options changed
+	// update pool configuration if the options changed
 	if size != g.opts.PoolSize || ttl != g.opts.PoolTTL {
-		g.pool = newPool(g.opts.PoolSize, g.opts.PoolTTL)
+		g.pool.Lock()
+		g.pool.size = g.opts.PoolSize
+		g.pool.ttl = int64(g.opts.PoolTTL.Seconds())
+		g.pool.Unlock()
 	}
 
 	return nil
