@@ -1,9 +1,9 @@
 # DNS Selector
 
-The dns selector looks up dns SRV records
+The dns selector looks up services via dns SRV records
 
-- Service Node Id and Port are set as the Target
-- The default domain is `micro.local`
+- SRV Target is used as the service Node Id and Port
+- The default domain is `micro.local` e.g foo becomes foo.micro.local
 
 ## Usage
 

@@ -1,3 +1,4 @@
+// Package dns provides a dns SRV selector
 package dns
 
 import (
