@@ -1,5 +1,5 @@
 // Package nsq provides an NSQ broker
-package nsqwithlookup
+package nsq
 
 import (
 	"context"
