@@ -15,10 +15,10 @@ import (
 )
 
 type nsqBroker struct {
-	nsqdTCPAddrs     []string
-	lookupdHTTPAddrs []string
-	opts             broker.Options
-	config           *nsq.Config
+	lookupdAddrs []string
+	addrs        []string
+	opts         broker.Options
+	config       *nsq.Config
 
 	sync.Mutex
 	running bool
@@ -65,8 +65,8 @@ func (n *nsqBroker) Init(opts ...broker.Option) error {
 }
 
 func (n *nsqBroker) initByContext(ctx context.Context) {
-	if v, ok := ctx.Value(lookupdHTTPAddrsKey{}).([]string); ok {
-		n.lookupdHTTPAddrs = v
+	if v, ok := ctx.Value(lookupdAddrsKey{}).([]string); ok {
+		n.lookupdAddrs = v
 	}
 
 	if v, ok := ctx.Value(consumerOptsKey{}).([]string); ok {
@@ -82,7 +82,7 @@ func (n *nsqBroker) Options() broker.Options {
 }
 
 func (n *nsqBroker) Address() string {
-	return n.nsqdTCPAddrs[rand.Intn(len(n.nsqdTCPAddrs))]
+	return n.addrs[rand.Intn(len(n.addrs))]
 }
 
 func (n *nsqBroker) Connect() error {
@@ -96,7 +96,7 @@ func (n *nsqBroker) Connect() error {
 	var producers []*nsq.Producer
 
 	// create producers
-	for _, addr := range n.nsqdTCPAddrs {
+	for _, addr := range n.addrs {
 		p, err := nsq.NewProducer(addr, n.config)
 		if err != nil {
 			return err
@@ -123,10 +123,10 @@ func (n *nsqBroker) Connect() error {
 
 		c.c = cm
 
-		if len(n.lookupdHTTPAddrs) > 0 {
-			c.c.ConnectToNSQLookupds(n.lookupdHTTPAddrs)
+		if len(n.lookupdAddrs) > 0 {
+			c.c.ConnectToNSQLookupds(n.lookupdAddrs)
 		} else {
-			err = c.c.ConnectToNSQDs(n.nsqdTCPAddrs)
+			err = c.c.ConnectToNSQDs(n.addrs)
 			if err != nil {
 				return err
 			}
@@ -155,14 +155,14 @@ func (n *nsqBroker) Disconnect() error {
 	for _, c := range n.c {
 		c.c.Stop()
 
-		if len(n.lookupdHTTPAddrs) > 0 {
+		if len(n.lookupdAddrs) > 0 {
 			// disconnect from all lookupd
-			for _, addr := range n.lookupdHTTPAddrs {
+			for _, addr := range n.lookupdAddrs {
 				c.c.DisconnectFromNSQLookupd(addr)
 			}
 		} else {
 			// disconnect from all nsq brokers
-			for _, addr := range n.nsqdTCPAddrs {
+			for _, addr := range n.addrs {
 				c.c.DisconnectFromNSQD(addr)
 			}
 		}
@@ -262,10 +262,10 @@ func (n *nsqBroker) Subscribe(topic string, handler broker.Handler, opts ...brok
 
 	c.AddConcurrentHandlers(h, concurrency)
 
-	if len(n.lookupdHTTPAddrs) > 0 {
-		err = c.ConnectToNSQLookupds(n.lookupdHTTPAddrs)
+	if len(n.lookupdAddrs) > 0 {
+		err = c.ConnectToNSQLookupds(n.lookupdAddrs)
 	} else {
-		err = c.ConnectToNSQDs(n.nsqdTCPAddrs)
+		err = c.ConnectToNSQDs(n.addrs)
 	}
 	if err != nil {
 		return nil, err
@@ -326,21 +326,21 @@ func NewBroker(opts ...broker.Option) broker.Broker {
 		o(&options)
 	}
 
-	var nsqdTCPAddrs []string
+	var addrs []string
 
 	for _, addr := range options.Addrs {
 		if len(addr) > 0 {
-			nsqdTCPAddrs = append(nsqdTCPAddrs, addr)
+			addrs = append(addrs, addr)
 		}
 	}
 
-	if len(nsqdTCPAddrs) == 0 {
-		nsqdTCPAddrs = []string{"127.0.0.1:4150"}
+	if len(addrs) == 0 {
+		addrs = []string{"127.0.0.1:4150"}
 	}
 
 	return &nsqBroker{
-		nsqdTCPAddrs: nsqdTCPAddrs,
-		opts:         options,
-		config:       nsq.NewConfig(),
+		addrs:  addrs,
+		opts:   options,
+		config: nsq.NewConfig(),
 	}
 }

@@ -12,7 +12,7 @@ type concurrentHandlerKey struct{}
 type maxInFlightKey struct{}
 type asyncPublishKey struct{}
 type deferredPublishKey struct{}
-type lookupdHTTPAddrsKey struct{}
+type lookupdAddrsKey struct{}
 type consumerOptsKey struct{}
 
 func WithConcurrentHandlers(n int) broker.SubscribeOption {
@@ -51,9 +51,9 @@ func WithDeferredPublish(delay time.Duration) broker.PublishOption {
 	}
 }
 
-func WithLookupdHTTPAddrs(addrs []string) broker.Option {
+func WithLookupdAddrs(addrs []string) broker.Option {
 	return func(o *broker.Options) {
-		o.Context = context.WithValue(o.Context, lookupdHTTPAddrsKey{}, addrs)
+		o.Context = context.WithValue(o.Context, lookupdAddrsKey{}, addrs)
 	}
 }
 
