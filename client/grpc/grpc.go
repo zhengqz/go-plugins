@@ -20,9 +20,9 @@ import (
 	"github.com/micro/go-micro/selector"
 	"github.com/micro/go-micro/transport"
 
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials"
-	gmetadata "google.golang.org/grpc/metadata"
+	"github.com/micro/grpc-go"
+	"github.com/micro/grpc-go/credentials"
+	gmetadata "github.com/micro/grpc-go/metadata"
 )
 
 type grpcClient struct {
