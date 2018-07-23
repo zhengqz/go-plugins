@@ -22,6 +22,7 @@ import (
 
 	"github.com/micro/grpc-go"
 	"github.com/micro/grpc-go/credentials"
+	"github.com/micro/grpc-go/encoding"
 	gmetadata "github.com/micro/grpc-go/metadata"
 )
 
@@ -174,11 +175,11 @@ func (g *grpcClient) stream(ctx context.Context, address string, req client.Requ
 	}, nil
 }
 
-func (g *grpcClient) newGRPCCodec(contentType string) (grpc.Codec, error) {
-	codecs := make(map[string]grpc.Codec)
+func (g *grpcClient) newGRPCCodec(contentType string) (encoding.Codec, error) {
+	codecs := make(map[string]encoding.Codec)
 	if g.opts.Context != nil {
 		if v := g.opts.Context.Value(codecsKey{}); v != nil {
-			codecs = v.(map[string]grpc.Codec)
+			codecs = v.(map[string]encoding.Codec)
 		}
 	}
 	if c, ok := codecs[contentType]; ok {
