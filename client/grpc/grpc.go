@@ -307,7 +307,7 @@ func (g *grpcClient) Call(ctx context.Context, req client.Request, rsp interface
 	ch := make(chan error, callOpts.Retries)
 	var gerr error
 
-	for i := 0; i < callOpts.Retries; i++ {
+	for i := 0; i <= callOpts.Retries; i++ {
 		go func() {
 			ch <- call(i)
 		}()
@@ -395,7 +395,7 @@ func (g *grpcClient) Stream(ctx context.Context, req client.Request, opts ...cli
 	ch := make(chan response, callOpts.Retries)
 	var grr error
 
-	for i := 0; i < callOpts.Retries; i++ {
+	for i := 0; i <= callOpts.Retries; i++ {
 		go func() {
 			s, err := call(i)
 			ch <- response{s, err}
