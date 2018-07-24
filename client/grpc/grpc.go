@@ -108,7 +108,7 @@ func (g *grpcClient) call(ctx context.Context, address string, req client.Reques
 	ch := make(chan error, 1)
 
 	go func() {
-		err := grpc.Invoke(ctx, methodToGRPC(req.Method(), req.Request()), req.Request(), rsp, cc.cc)
+		err := cc.Invoke(ctx, methodToGRPC(req.Method(), req.Request()), req.Request(), rsp)
 		ch <- microError(err)
 	}()
 
