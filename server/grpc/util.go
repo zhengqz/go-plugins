@@ -244,11 +244,6 @@ func toRPCErr(err error) error {
 	switch e := err.(type) {
 	case *rpcError:
 		return err
-	case transport.StreamError:
-		return &rpcError{
-			code: e.Code,
-			desc: e.Desc,
-		}
 	case transport.ConnectionError:
 		return &rpcError{
 			code: codes.Internal,

@@ -276,10 +276,6 @@ func (g *grpcServer) processRequest(t transport.ServerTransport, stream *transpo
 				}
 			case transport.ConnectionError:
 				// Nothing to do here.
-			case transport.StreamError:
-				if err := t.WriteStatus(stream, status.New(err.Code, err.Desc)); err != nil {
-					log.Logf("grpc: Server.processUnaryRPC failed to write status %v", err)
-				}
 			default:
 				panic(fmt.Sprintf("grpc: Unexpected error (%T) from recvMsg: %v", err, err))
 			}
@@ -394,9 +390,6 @@ func (g *grpcServer) processRequest(t transport.ServerTransport, stream *transpo
 			switch err := err.(type) {
 			case transport.ConnectionError:
 				// Nothing to do here.
-			case transport.StreamError:
-				statusCode = err.Code
-				statusDesc = err.Desc
 			default:
 				statusCode = codes.Unknown
 				statusDesc = err.Error()
@@ -451,9 +444,6 @@ func (g *grpcServer) processStream(t transport.ServerTransport, stream *transpor
 		} else if err, ok := appErr.(*errors.Error); ok {
 			ss.statusCode = microError(err)
 			ss.statusDesc = appErr.Error()
-		} else if err, ok := appErr.(transport.StreamError); ok {
-			ss.statusCode = err.Code
-			ss.statusDesc = err.Desc
 		} else {
 			ss.statusCode = convertCode(appErr)
 			ss.statusDesc = appErr.Error()
