@@ -155,6 +155,17 @@ func (t *grpcTransport) Listen(addr string, opts ...transport.ListenOption) (tra
 	}, nil
 }
 
+func (t *grpcTransport) Init(opts ...transport.Option) error {
+	for _, o := range opts {
+		o(&t.opts)
+	}
+	return nil
+}
+
+func (t *grpcTransport) Options() transport.Options {
+	return t.opts
+}
+
 func (t *grpcTransport) String() string {
 	return "grpc"
 }

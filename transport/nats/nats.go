@@ -62,6 +62,38 @@ func init() {
 	cmd.DefaultTransports["nats"] = NewTransport
 }
 
+func configure(n *ntport, opts ...transport.Option) {
+	for _, o := range opts {
+		o(&n.opts)
+	}
+
+	natsOptions := nats.GetDefaultOptions()
+	if n, ok := n.opts.Context.Value(optionsKey{}).(nats.Options); ok {
+		natsOptions = n
+	}
+
+	// transport.Options have higher priority than nats.Options
+	// only if Addrs, Secure or TLSConfig were not set through a transport.Option
+	// we read them from nats.Option
+	if len(n.opts.Addrs) == 0 {
+		n.opts.Addrs = natsOptions.Servers
+	}
+
+	if !n.opts.Secure {
+		n.opts.Secure = natsOptions.Secure
+	}
+
+	if n.opts.TLSConfig == nil {
+		n.opts.TLSConfig = natsOptions.TLSConfig
+	}
+
+	// check & add nats:// prefix (this makes also sure that the addresses
+	// stored in natsRegistry.addrs and options.Addrs are identical)
+	n.opts.Addrs = setAddrs(n.opts.Addrs)
+	n.nopts = natsOptions
+	n.addrs = n.opts.Addrs
+}
+
 func setAddrs(addrs []string) []string {
 	var cAddrs []string
 	for _, addr := range addrs {
@@ -370,12 +402,20 @@ func (n *ntport) Listen(addr string, listenOpts ...transport.ListenOption) (tran
 	}, nil
 }
 
+func (n *ntport) Init(opts ...transport.Option) error {
+	configure(n, opts...)
+	return nil
+}
+
+func (n *ntport) Options() transport.Options {
+	return n.opts
+}
+
 func (n *ntport) String() string {
 	return "nats"
 }
 
 func NewTransport(opts ...transport.Option) transport.Transport {
-
 	options := transport.Options{
 		// Default codec
 		Codec:   json.NewCodec(),
@@ -383,37 +423,9 @@ func NewTransport(opts ...transport.Option) transport.Transport {
 		Context: context.Background(),
 	}
 
-	for _, o := range opts {
-		o(&options)
+	nt := &ntport{
+		opts: options,
 	}
-
-	natsOptions := nats.GetDefaultOptions()
-	if n, ok := options.Context.Value(optionsKey{}).(nats.Options); ok {
-		natsOptions = n
-	}
-
-	// transport.Options have higher priority than nats.Options
-	// only if Addrs, Secure or TLSConfig were not set through a transport.Option
-	// we read them from nats.Option
-	if len(options.Addrs) == 0 {
-		options.Addrs = natsOptions.Servers
-	}
-
-	if !options.Secure {
-		options.Secure = natsOptions.Secure
-	}
-
-	if options.TLSConfig == nil {
-		options.TLSConfig = natsOptions.TLSConfig
-	}
-
-	// check & add nats:// prefix (this makes also sure that the addresses
-	// stored in natsRegistry.addrs and options.Addrs are identical)
-	options.Addrs = setAddrs(options.Addrs)
-
-	return &ntport{
-		addrs: options.Addrs,
-		opts:  options,
-		nopts: natsOptions,
-	}
+	configure(nt, opts...)
+	return nt
 }

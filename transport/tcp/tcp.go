@@ -246,6 +246,17 @@ func (t *tcpTransport) Listen(addr string, opts ...transport.ListenOption) (tran
 	}, nil
 }
 
+func (t *tcpTransport) Init(opts ...transport.Option) error {
+	for _, o := range opts {
+		o(&t.opts)
+	}
+	return nil
+}
+
+func (t *tcpTransport) Options() transport.Options {
+	return t.opts
+}
+
 func (t *tcpTransport) String() string {
 	return "tcp"
 }
