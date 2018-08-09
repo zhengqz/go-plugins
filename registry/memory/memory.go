@@ -51,6 +51,21 @@ func (m *memoryRegistry) watch(r *registry.Result) {
 	}
 }
 
+func (m *memoryRegistry) Init(opts ...registry.Option) error {
+	for _, o := range opts {
+		o(&m.options)
+	}
+
+	// add services
+	m.Lock()
+	for k, v := range getServices(m.options.Context) {
+		s := m.services[k]
+		m.services[k] = addServices(s, v)
+	}
+	m.Unlock()
+	return nil
+}
+
 func (m *memoryRegistry) Options() registry.Options {
 	return m.options
 }

@@ -35,6 +35,52 @@ func init() {
 	cmd.DefaultRegistries["nats"] = NewRegistry
 }
 
+func configure(n *natsRegistry, opts ...registry.Option) error {
+	for _, o := range opts {
+		o(&n.opts)
+	}
+
+	natsOptions := nats.GetDefaultOptions()
+	if n, ok := n.opts.Context.Value(optionsKey{}).(nats.Options); ok {
+		natsOptions = n
+	}
+
+	queryTopic := defaultQueryTopic
+	if qt, ok := n.opts.Context.Value(queryTopicKey{}).(string); ok {
+		queryTopic = qt
+	}
+
+	watchTopic := defaultWatchTopic
+	if wt, ok := n.opts.Context.Value(watchTopicKey{}).(string); ok {
+		watchTopic = wt
+	}
+
+	// registry.Options have higher priority than nats.Options
+	// only if Addrs, Secure or TLSConfig were not set through a registry.Option
+	// we read them from nats.Option
+	if len(n.opts.Addrs) == 0 {
+		n.opts.Addrs = natsOptions.Servers
+	}
+
+	if !n.opts.Secure {
+		n.opts.Secure = natsOptions.Secure
+	}
+
+	if n.opts.TLSConfig == nil {
+		n.opts.TLSConfig = natsOptions.TLSConfig
+	}
+
+	// check & add nats:// prefix (this makes also sure that the addresses
+	// stored in natsRegistry.addrs and n.opts.Addrs are identical)
+	n.opts.Addrs = setAddrs(n.opts.Addrs)
+
+	n.addrs = n.opts.Addrs
+	n.nopts = natsOptions
+	n.queryTopic = queryTopic
+	n.watchTopic = watchTopic
+
+	return nil
+}
 func setAddrs(addrs []string) []string {
 	var cAddrs []string
 	for _, addr := range addrs {
@@ -258,6 +304,10 @@ loop:
 	return services, nil
 }
 
+func (n *natsRegistry) Init(opts ...registry.Option) error {
+	return configure(n, opts...)
+}
+
 func (n *natsRegistry) Options() registry.Options {
 	return n.opts
 }
@@ -354,51 +404,11 @@ func NewRegistry(opts ...registry.Option) registry.Registry {
 		Context: context.Background(),
 	}
 
-	for _, o := range opts {
-		o(&options)
+	n := &natsRegistry{
+		opts:      options,
+		services:  make(map[string][]*registry.Service),
+		listeners: make(map[string]chan bool),
 	}
-
-	natsOptions := nats.GetDefaultOptions()
-	if n, ok := options.Context.Value(optionsKey{}).(nats.Options); ok {
-		natsOptions = n
-	}
-
-	queryTopic := defaultQueryTopic
-	if qt, ok := options.Context.Value(queryTopicKey{}).(string); ok {
-		queryTopic = qt
-	}
-
-	watchTopic := defaultWatchTopic
-	if wt, ok := options.Context.Value(watchTopicKey{}).(string); ok {
-		watchTopic = wt
-	}
-
-	// registry.Options have higher priority than nats.Options
-	// only if Addrs, Secure or TLSConfig were not set through a registry.Option
-	// we read them from nats.Option
-	if len(options.Addrs) == 0 {
-		options.Addrs = natsOptions.Servers
-	}
-
-	if !options.Secure {
-		options.Secure = natsOptions.Secure
-	}
-
-	if options.TLSConfig == nil {
-		options.TLSConfig = natsOptions.TLSConfig
-	}
-
-	// check & add nats:// prefix (this makes also sure that the addresses
-	// stored in natsRegistry.addrs and options.Addrs are identical)
-	options.Addrs = setAddrs(options.Addrs)
-
-	return &natsRegistry{
-		addrs:      options.Addrs,
-		opts:       options,
-		nopts:      natsOptions,
-		queryTopic: queryTopic,
-		watchTopic: watchTopic,
-		services:   make(map[string][]*registry.Service),
-		listeners:  make(map[string]chan bool),
-	}
+	configure(n, opts...)
+	return n
 }

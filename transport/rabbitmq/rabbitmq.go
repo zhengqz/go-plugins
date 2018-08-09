@@ -365,6 +365,20 @@ func (r *rmqtport) Listen(addr string, opts ...transport.ListenOption) (transpor
 	}, nil
 }
 
+func (r *rmqtport) Init(opts ...transport.Option) error {
+	for _, o := range opts {
+		o(&r.opts)
+	}
+	r.addrs = r.opts.Addrs
+	r.conn.Close()
+	r.conn = newRabbitMQConn("", r.opts.Addrs)
+	return nil
+}
+
+func (r *rmqtport) Options() transport.Options {
+	return r.opts
+}
+
 func (r *rmqtport) String() string {
 	return "rabbitmq"
 }
