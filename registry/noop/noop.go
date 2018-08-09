@@ -14,6 +14,13 @@ func init() {
 	cmd.DefaultRegistries["noop"] = NewRegistry
 }
 
+func (m *noopRegistry) Init(opts ...registry.Option) error {
+	for _, o := range opts {
+		o(&m.options)
+	}
+	return nil
+}
+
 func (m *noopRegistry) Options() registry.Options {
 	return m.options
 }

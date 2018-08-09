@@ -23,13 +23,12 @@ func init() {
 	cmd.DefaultRegistries["sidecar"] = NewRegistry
 }
 
-func newRegistry(opts ...registry.Option) registry.Registry {
-	var options registry.Options
+func configure(s *sidecar, opts ...registry.Option) error {
 	for _, o := range opts {
-		o(&options)
+		o(&s.opts)
 	}
 	var addrs []string
-	for _, addr := range options.Addrs {
+	for _, addr := range s.opts.Addrs {
 		if len(addr) > 0 {
 			addrs = append(addrs, addr)
 		}
@@ -37,11 +36,20 @@ func newRegistry(opts ...registry.Option) registry.Registry {
 	if len(addrs) == 0 {
 		addrs = []string{"localhost:8081"}
 	}
-	registry.Addrs(addrs...)(&options)
+	registry.Addrs(addrs...)(&s.opts)
+	return nil
+}
 
-	return &sidecar{
-		opts: options,
+func newRegistry(opts ...registry.Option) registry.Registry {
+	s := &sidecar{
+		opts: registry.Options{},
 	}
+	configure(s, opts...)
+	return s
+}
+
+func (s *sidecar) Init(opts ...registry.Option) error {
+	return configure(s, opts...)
 }
 
 func (s *sidecar) Options() registry.Options {
