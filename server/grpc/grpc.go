@@ -276,6 +276,10 @@ func (g *grpcServer) processRequest(t transport.ServerTransport, stream *transpo
 				}
 			case transport.ConnectionError:
 				// Nothing to do here.
+			case interface{ GRPCStatus() *status.Status }:
+				if err := t.WriteStatus(stream, err.GRPCStatus()); err != nil {
+					log.Logf("grpc: Server.processUnaryRPC failed to write status %v", err)
+				}
 			default:
 				panic(fmt.Sprintf("grpc: Unexpected error (%T) from recvMsg: %v", err, err))
 			}
