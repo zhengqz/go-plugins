@@ -1,10 +1,10 @@
 package grpc
 
 import (
-	"encoding/json"
 	"fmt"
 
 	"github.com/golang/protobuf/proto"
+	"github.com/json-iterator/go"
 	"github.com/micro/go-micro/codec"
 	"github.com/micro/go-micro/codec/jsonrpc"
 	"github.com/micro/go-micro/codec/protorpc"
@@ -33,7 +33,19 @@ var (
 		"application/proto-rpc":    protorpc.NewCodec,
 		"application/octet-stream": protorpc.NewCodec,
 	}
+
+	json = jsoniter.ConfigCompatibleWithStandardLibrary
 )
+
+// UseNumber fix unmarshal Number(8234567890123456789) to interface(8.234567890123457e+18)
+func UseNumber() {
+	json = jsoniter.Config{
+		UseNumber:              true,
+		EscapeHTML:             true,
+		SortMapKeys:            true,
+		ValidateJsonRawMessage: true,
+	}.Froze()
+}
 
 func (protoCodec) Marshal(v interface{}) ([]byte, error) {
 	return proto.Marshal(v.(proto.Message))
