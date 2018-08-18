@@ -69,6 +69,20 @@ func (s *sidecar) Init(opts ...broker.Option) error {
 	for _, o := range opts {
 		o(&s.opts)
 	}
+	var addrs []string
+
+	for _, addr := range s.opts.Addrs {
+		if len(addr) == 0 {
+			continue
+		}
+		addrs = append(addrs, addr)
+	}
+
+	if len(addrs) == 0 {
+		addrs = []string{"localhost:8081"}
+	}
+
+	broker.Addrs(addrs...)(&s.opts)
 	return nil
 }
 

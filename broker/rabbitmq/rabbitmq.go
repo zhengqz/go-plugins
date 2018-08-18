@@ -217,6 +217,7 @@ func (r *rbroker) Init(opts ...broker.Option) error {
 	for _, o := range opts {
 		o(&r.opts)
 	}
+	r.addrs = r.opts.Addrs
 	return nil
 }
 

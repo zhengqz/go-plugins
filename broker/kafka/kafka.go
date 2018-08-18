@@ -120,6 +120,17 @@ func (k *kBroker) Init(opts ...broker.Option) error {
 	for _, o := range opts {
 		o(&k.opts)
 	}
+	var cAddrs []string
+	for _, addr := range k.opts.Addrs {
+		if len(addr) == 0 {
+			continue
+		}
+		cAddrs = append(cAddrs, addr)
+	}
+	if len(cAddrs) == 0 {
+		cAddrs = []string{"127.0.0.1:9092"}
+	}
+	k.addrs = cAddrs
 	return nil
 }
 

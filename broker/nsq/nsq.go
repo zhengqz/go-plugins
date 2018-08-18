@@ -59,12 +59,23 @@ func (n *nsqBroker) Init(opts ...broker.Option) error {
 		o(&n.opts)
 	}
 
-	n.initByContext(n.opts.Context)
+	var addrs []string
 
+	for _, addr := range n.opts.Addrs {
+		if len(addr) > 0 {
+			addrs = append(addrs, addr)
+		}
+	}
+
+	if len(addrs) == 0 {
+		addrs = []string{"127.0.0.1:4150"}
+	}
+
+	n.configure(n.opts.Context)
 	return nil
 }
 
-func (n *nsqBroker) initByContext(ctx context.Context) {
+func (n *nsqBroker) configure(ctx context.Context) {
 	if v, ok := ctx.Value(lookupdAddrsKey{}).([]string); ok {
 		n.lookupdAddrs = v
 	}
@@ -338,9 +349,12 @@ func NewBroker(opts ...broker.Option) broker.Broker {
 		addrs = []string{"127.0.0.1:4150"}
 	}
 
-	return &nsqBroker{
+	n := &nsqBroker{
 		addrs:  addrs,
 		opts:   options,
 		config: nsq.NewConfig(),
 	}
+	n.configure(n.opts.Context)
+
+	return n
 }
