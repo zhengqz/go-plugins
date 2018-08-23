@@ -71,6 +71,7 @@ func (n *nsqBroker) Init(opts ...broker.Option) error {
 		addrs = []string{"127.0.0.1:4150"}
 	}
 
+	n.addrs = addrs
 	n.configure(n.opts.Context)
 	return nil
 }
