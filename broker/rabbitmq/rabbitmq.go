@@ -13,11 +13,10 @@ import (
 )
 
 type rbroker struct {
-	conn  *rabbitMQConn
-	addrs []string
-	opts  broker.Options
-	mtx   sync.Mutex
-	wg    sync.WaitGroup
+	conn *rabbitMQConn
+	opts broker.Options
+	mtx  sync.Mutex
+	wg   sync.WaitGroup
 }
 
 type subscriber struct {
@@ -207,8 +206,8 @@ func (r *rbroker) String() string {
 }
 
 func (r *rbroker) Address() string {
-	if len(r.addrs) > 0 {
-		return r.addrs[0]
+	if len(r.opts.Addrs) > 0 {
+		return r.opts.Addrs[0]
 	}
 	return ""
 }
@@ -217,7 +216,6 @@ func (r *rbroker) Init(opts ...broker.Option) error {
 	for _, o := range opts {
 		o(&r.opts)
 	}
-	r.addrs = r.opts.Addrs
 	return nil
 }
 
@@ -247,8 +245,7 @@ func NewBroker(opts ...broker.Option) broker.Broker {
 	}
 
 	return &rbroker{
-		addrs: options.Addrs,
-		opts:  options,
+		opts: options,
 	}
 }
 
