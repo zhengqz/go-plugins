@@ -2,6 +2,7 @@
 package kafka
 
 import (
+	"context"
 	"sync"
 
 	"github.com/Shopify/sarama"
@@ -11,7 +12,6 @@ import (
 	"github.com/micro/go-micro/cmd"
 	"github.com/pborman/uuid"
 	sc "gopkg.in/bsm/sarama-cluster.v2"
-	"context"
 )
 
 type kBroker struct {
@@ -222,7 +222,7 @@ func (k *kBroker) String() string {
 func NewBroker(opts ...broker.Option) broker.Broker {
 	options := broker.Options{
 		// default to json codec
-		Codec: json.NewCodec(),
+		Codec:   json.NewCodec(),
 		Context: context.Background(),
 	}
 

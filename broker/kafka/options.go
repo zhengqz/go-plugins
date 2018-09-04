@@ -2,13 +2,14 @@ package kafka
 
 import (
 	"context"
-	"github.com/micro/go-micro/broker"
+
 	"github.com/Shopify/sarama"
+	"github.com/micro/go-micro/broker"
 	sc "gopkg.in/bsm/sarama-cluster.v2"
 )
 
 var (
-	DefaultBrokerConfig = sarama.NewConfig()
+	DefaultBrokerConfig  = sarama.NewConfig()
 	DefaultClusterConfig = sc.NewConfig()
 )
 
