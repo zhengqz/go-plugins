@@ -11,6 +11,7 @@ import (
 	"github.com/micro/go-micro/cmd"
 	"github.com/pborman/uuid"
 	sc "gopkg.in/bsm/sarama-cluster.v2"
+	"context"
 )
 
 type kBroker struct {
@@ -78,7 +79,7 @@ func (k *kBroker) Connect() error {
 		return nil
 	}
 
-	pconfig := sarama.NewConfig()
+	pconfig := k.getBrokerConfig()
 	// For implementation reasons, the SyncProducer requires
 	// `Producer.Return.Errors` and `Producer.Return.Successes`
 	// to be set to true in its configuration.
@@ -151,10 +152,7 @@ func (k *kBroker) Publish(topic string, msg *broker.Message, opts ...broker.Publ
 }
 
 func (k *kBroker) getSaramaClusterClient(topic string) (*sc.Client, error) {
-	config := sc.NewConfig()
-
-	// TODO: make configurable offset as SubscriberOption
-	config.Config.Consumer.Offsets.Initial = sarama.OffsetNewest
+	config := k.getClusterConfig()
 
 	cs, err := sc.NewClient(k.addrs, config)
 	if err != nil {
@@ -225,6 +223,7 @@ func NewBroker(opts ...broker.Option) broker.Broker {
 	options := broker.Options{
 		// default to json codec
 		Codec: json.NewCodec(),
+		Context: context.Background(),
 	}
 
 	for _, o := range opts {
@@ -246,4 +245,20 @@ func NewBroker(opts ...broker.Option) broker.Broker {
 		addrs: cAddrs,
 		opts:  options,
 	}
+}
+
+func (k *kBroker) getBrokerConfig() *sarama.Config {
+	if c, ok := k.opts.Context.Value(brokerConfigKey{}).(*sarama.Config); ok {
+		return c
+	}
+	return DefaultBrokerConfig
+}
+
+func (k *kBroker) getClusterConfig() *sc.Config {
+	if c, ok := k.opts.Context.Value(clusterConfigKey{}).(*sc.Config); ok {
+		return c
+	}
+	clusterConfig := DefaultClusterConfig
+	clusterConfig.Config.Consumer.Offsets.Initial = sarama.OffsetNewest
+	return clusterConfig
 }
