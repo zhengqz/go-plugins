@@ -254,11 +254,9 @@ func (n *ntportListener) Accept(fn func(transport.Socket)) error {
 		return err
 	}
 
-	var lerr error
-
 	go func() {
 		<-n.exit
-		lerr = s.Unsubscribe()
+		s.Unsubscribe()
 	}()
 
 	for {
