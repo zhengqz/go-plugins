@@ -17,7 +17,7 @@ type rabbitMQChannel struct {
 	channel    *amqp.Channel
 }
 
-func newRabbitChannel(conn *amqp.Connection) (*rabbitMQChannel, error) {
+func newRabbitChannel(conn *amqp.Connection, prefetchCount int, prefetchGlobal bool) (*rabbitMQChannel, error) {
 	id, err := uuid.NewV4()
 	if err != nil {
 		return nil, err
@@ -26,16 +26,20 @@ func newRabbitChannel(conn *amqp.Connection) (*rabbitMQChannel, error) {
 		uuid:       id.String(),
 		connection: conn,
 	}
-	if err := rabbitCh.Connect(); err != nil {
+	if err := rabbitCh.Connect(prefetchCount, prefetchGlobal); err != nil {
 		return nil, err
 	}
 	return rabbitCh, nil
 
 }
 
-func (r *rabbitMQChannel) Connect() error {
+func (r *rabbitMQChannel) Connect(prefetchCount int, prefetchGlobal bool) error {
 	var err error
 	r.channel, err = r.connection.Channel()
+	if err != nil {
+		return err
+	}
+	err = r.channel.Qos(prefetchCount, 0, prefetchGlobal)
 	if err != nil {
 		return err
 	}

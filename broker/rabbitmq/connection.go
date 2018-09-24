@@ -15,8 +15,10 @@ import (
 )
 
 var (
-	DefaultExchange  = "micro"
-	DefaultRabbitURL = "amqp://guest:guest@127.0.0.1:5672"
+	DefaultExchange       = "micro"
+	DefaultRabbitURL      = "amqp://guest:guest@127.0.0.1:5672"
+	DefaultPrefetchCount  = 0
+	DefaultPrefetchGlobal = false
 
 	dial    = amqp.Dial
 	dialTLS = amqp.DialTLS
@@ -28,6 +30,8 @@ type rabbitMQConn struct {
 	ExchangeChannel *rabbitMQChannel
 	exchange        string
 	url             string
+	prefetchCount   int
+	prefetchGlobal  bool
 
 	sync.Mutex
 	connected bool
@@ -36,7 +40,7 @@ type rabbitMQConn struct {
 	waitConnection chan struct{}
 }
 
-func newRabbitMQConn(exchange string, urls []string) *rabbitMQConn {
+func newRabbitMQConn(exchange string, urls []string, prefetchCount int, prefetchGlobal bool) *rabbitMQConn {
 	var url string
 
 	if len(urls) > 0 && regexp.MustCompile("^amqp(s)?://.*").MatchString(urls[0]) {
@@ -52,6 +56,8 @@ func newRabbitMQConn(exchange string, urls []string) *rabbitMQConn {
 	ret := &rabbitMQConn{
 		exchange:       exchange,
 		url:            url,
+		prefetchCount:  prefetchCount,
+		prefetchGlobal: prefetchGlobal,
 		close:          make(chan bool),
 		waitConnection: make(chan struct{}),
 	}
@@ -174,18 +180,18 @@ func (r *rabbitMQConn) tryConnect(secure bool, config *tls.Config) error {
 		return err
 	}
 
-	if r.Channel, err = newRabbitChannel(r.Connection); err != nil {
+	if r.Channel, err = newRabbitChannel(r.Connection, r.prefetchCount, r.prefetchGlobal); err != nil {
 		return err
 	}
 
 	r.Channel.DeclareExchange(r.exchange)
-	r.ExchangeChannel, err = newRabbitChannel(r.Connection)
+	r.ExchangeChannel, err = newRabbitChannel(r.Connection, r.prefetchCount, r.prefetchGlobal)
 
 	return err
 }
 
 func (r *rabbitMQConn) Consume(queue, key string, headers amqp.Table, autoAck, durableQueue bool) (*rabbitMQChannel, <-chan amqp.Delivery, error) {
-	consumerChannel, err := newRabbitChannel(r.Connection)
+	consumerChannel, err := newRabbitChannel(r.Connection, r.prefetchCount, r.prefetchGlobal)
 	if err != nil {
 		return nil, nil, err
 	}

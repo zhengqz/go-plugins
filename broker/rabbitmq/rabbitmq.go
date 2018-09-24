@@ -13,10 +13,13 @@ import (
 )
 
 type rbroker struct {
-	conn *rabbitMQConn
-	opts broker.Options
-	mtx  sync.Mutex
-	wg   sync.WaitGroup
+	conn           *rabbitMQConn
+	addrs          []string
+	opts           broker.Options
+	prefetchCount  int
+	prefetchGlobal bool
+	mtx            sync.Mutex
+	wg             sync.WaitGroup
 }
 
 type subscriber struct {
@@ -206,8 +209,8 @@ func (r *rbroker) String() string {
 }
 
 func (r *rbroker) Address() string {
-	if len(r.opts.Addrs) > 0 {
-		return r.opts.Addrs[0]
+	if len(r.addrs) > 0 {
+		return r.addrs[0]
 	}
 	return ""
 }
@@ -216,12 +219,13 @@ func (r *rbroker) Init(opts ...broker.Option) error {
 	for _, o := range opts {
 		o(&r.opts)
 	}
+	r.addrs = r.opts.Addrs
 	return nil
 }
 
 func (r *rbroker) Connect() error {
 	if r.conn == nil {
-		r.conn = newRabbitMQConn(r.getExchange(), r.opts.Addrs)
+		r.conn = newRabbitMQConn(r.getExchange(), r.opts.Addrs, r.getPrefetchCount(), r.getPrefetchGlobal())
 	}
 	return r.conn.Connect(r.opts.Secure, r.opts.TLSConfig)
 }
@@ -245,7 +249,8 @@ func NewBroker(opts ...broker.Option) broker.Broker {
 	}
 
 	return &rbroker{
-		opts: options,
+		addrs: options.Addrs,
+		opts:  options,
 	}
 }
 
@@ -254,4 +259,18 @@ func (r *rbroker) getExchange() string {
 		return e
 	}
 	return DefaultExchange
+}
+
+func (r *rbroker) getPrefetchCount() int {
+	if e, ok := r.opts.Context.Value(prefetchCountKey{}).(int); ok {
+		return e
+	}
+	return DefaultPrefetchCount
+}
+
+func (r *rbroker) getPrefetchGlobal() bool {
+	if e, ok := r.opts.Context.Value(prefetchGlobalKey{}).(bool); ok {
+		return e
+	}
+	return DefaultPrefetchGlobal
 }
