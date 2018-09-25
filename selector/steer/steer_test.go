@@ -105,7 +105,7 @@ func TestSteer(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			fn := steer.Option(tt.args.entropy...)
+			fn := steer.Strategy(tt.args.entropy...)
 			next := getNext(fn, tt.args.nodes)
 
 			if next == nil {
