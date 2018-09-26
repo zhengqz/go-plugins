@@ -1,4 +1,4 @@
-package steer
+package shard
 
 import (
 	"strings"
@@ -12,27 +12,27 @@ import (
 // zeroKey is the base key for all hashes, it is 32 zeros.
 var zeroKey [32]byte
 
-// Strategy returns a call option which tries to consistently steer all requests for a given set of entropy to a
+// Strategy returns a call option which tries to consistently direct all requests for a given set of keys to a
 // single instance to improve memory efficiency where instances are caching data.
 //
-// This is the preferred usage as it gives the ultimate flexibility for determining the entropy used.
+// This is the preferred usage as it gives the ultimate flexibility for determining the keys used.
 //
 // Usage:
-//    `myClient.MyCall(ctx, req, steer.Strategy(req.ID))`
-func Strategy(entropy ...string) client.CallOption {
-	return client.WithSelectOption(NewSelector(entropy))
+//    `myClient.MyCall(ctx, req, shard.Strategy(req.ID))`
+func Strategy(keys ...string) client.CallOption {
+	return client.WithSelectOption(NewSelector(keys))
 }
 
-// NewSelector returns a `SelectOption` that directs all request according to the given `entropy`.
-func NewSelector(entropy []string) selector.SelectOption {
+// NewSelector returns a `SelectOption` that directs all request according to the given `keys`.
+func NewSelector(keys []string) selector.SelectOption {
 	return selector.WithStrategy(func(services []*registry.Service) selector.Next {
-		return Next(entropy, services)
+		return Next(keys, services)
 	})
 }
 
 // Next returns a `Next` function which returns the next highest scoring node.
-func Next(entropy []string, services []*registry.Service) selector.Next {
-	possibleNodes, scores := ScoreNodes(entropy, services)
+func Next(keys []string, services []*registry.Service) selector.Next {
+	possibleNodes, scores := ScoreNodes(keys, services)
 
 	return func() (*registry.Node, error) {
 		var best uint64
@@ -60,9 +60,9 @@ func Next(entropy []string, services []*registry.Service) selector.Next {
 }
 
 // ScoreNodes returns a score for each node found in the given services.
-func ScoreNodes(entropy []string, services []*registry.Service) (possibleNodes []*registry.Node, scores []uint64) {
-	// Generate a base hashing key based off the supplied entropy values.
-	key := highwayhash.Sum([]byte(strings.Join(entropy, ":")), zeroKey[:])
+func ScoreNodes(keys []string, services []*registry.Service) (possibleNodes []*registry.Node, scores []uint64) {
+	// Generate a base hashing key based off the supplied keys values.
+	key := highwayhash.Sum([]byte(strings.Join(keys, ":")), zeroKey[:])
 
 	// Get all the possible nodes for the services, and assign a hash-based score to each of them.
 	for _, s := range services {

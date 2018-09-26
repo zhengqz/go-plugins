@@ -1,4 +1,4 @@
-package steer_test
+package shard_test
 
 import (
 	"testing"
@@ -6,14 +6,14 @@ import (
 	"github.com/micro/go-micro/client"
 	"github.com/micro/go-micro/registry"
 	"github.com/micro/go-micro/selector"
-	"github.com/micro/go-plugins/selector/steer"
+	"github.com/micro/go-plugins/selector/shard"
 )
 
-func TestSteer(t *testing.T) {
+func TestShard(t *testing.T) {
 	type args struct {
-		entropy []string
-		nodes   []*registry.Node
-		count   int
+		keys  []string
+		nodes []*registry.Node
+		count int
 	}
 
 	type test struct {
@@ -42,70 +42,70 @@ func TestSteer(t *testing.T) {
 		{
 			name: "test single",
 			args: args{
-				entropy: []string{"a"},
-				nodes:   nodes(node1),
-				count:   1,
+				keys:  []string{"a"},
+				nodes: nodes(node1),
+				count: 1,
 			},
 			want: node1,
 		},
 		{
 			name: "test two nodes",
 			args: args{
-				entropy: []string{"c"},
-				nodes:   nodes(node1, node2),
-				count:   1,
+				keys:  []string{"c"},
+				nodes: nodes(node1, node2),
+				count: 1,
 			},
 			want: node2,
 		},
 		{
 			name: "test three nodes",
 			args: args{
-				entropy: []string{"b"},
-				nodes:   nodes(node1, node2, node3),
-				count:   1,
+				keys:  []string{"b"},
+				nodes: nodes(node1, node2, node3),
+				count: 1,
 			},
 			want: node3,
 		},
 		{
 			name: "test three nodes two params",
 			args: args{
-				entropy: []string{"a", "a"},
-				nodes:   nodes(node1, node2, node3),
-				count:   1,
+				keys:  []string{"a", "a"},
+				nodes: nodes(node1, node2, node3),
+				count: 1,
 			},
 			want: node1,
 		},
 		{
 			name: "test three nodes two params two cycles",
 			args: args{
-				entropy: []string{"a", "a"},
-				nodes:   nodes(node1, node2, node3),
-				count:   2,
+				keys:  []string{"a", "a"},
+				nodes: nodes(node1, node2, node3),
+				count: 2,
 			},
 			want: node2,
 		},
 		{
 			name: "test three nodes two params three cycles",
 			args: args{
-				entropy: []string{"a", "a"},
-				nodes:   nodes(node1, node2, node3),
-				count:   3,
+				keys:  []string{"a", "a"},
+				nodes: nodes(node1, node2, node3),
+				count: 3,
 			},
 			want: node3,
 		},
 		{
 			name: "test three nodes two params four cycles",
 			args: args{
-				entropy: []string{"a", "a"},
-				nodes:   nodes(node1, node2, node3),
-				count:   4,
+				keys:  []string{"a", "a"},
+				nodes: nodes(node1, node2, node3),
+				count: 4,
 			},
 			want: nil,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			fn := steer.Strategy(tt.args.entropy...)
+			fn := shard.Strategy(tt.args.keys...)
 			next := getNext(fn, tt.args.nodes)
 
 			if next == nil {
@@ -124,7 +124,7 @@ func TestSteer(t *testing.T) {
 			}
 
 			if got != tt.want {
-				t.Errorf("Steer() = %v, want %v", got, tt.want)
+				t.Errorf("Shard() = %v, want %v", got, tt.want)
 			}
 		})
 	}
