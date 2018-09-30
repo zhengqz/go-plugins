@@ -22,7 +22,7 @@ func TestNewRabbitMQConnURL(t *testing.T) {
 	}
 
 	for _, test := range testcases {
-		conn := newRabbitMQConn("exchange", test.urls)
+		conn := newRabbitMQConn("exchange", test.urls, 0, false)
 
 		if have, want := conn.url, test.want; have != want {
 			t.Errorf("%s: invalid url, want %q, have %q", test.title, want, have)
@@ -63,7 +63,7 @@ func TestTryToConnectTLS(t *testing.T) {
 	for _, test := range testcases {
 		dialCount, dialTLSCount = 0, 0
 
-		conn := newRabbitMQConn("exchange", []string{test.url})
+		conn := newRabbitMQConn("exchange", []string{test.url}, 0, false)
 		conn.tryConnect(test.secure, test.tlsConfig)
 
 		have := dialCount
@@ -73,6 +73,33 @@ func TestTryToConnectTLS(t *testing.T) {
 
 		if have != 1 {
 			t.Errorf("%s: used wrong dialer, Dial called %d times, DialTLS called %d times", test.title, dialCount, dialTLSCount)
+		}
+	}
+}
+
+func TestNewRabbitMQPrefetch(t *testing.T) {
+	testcases := []struct {
+		title          string
+		urls           []string
+		prefetchCount  int
+		prefetchGlobal bool
+	}{
+		{"Multiple URLs", []string{"amqp://example.com/one", "amqp://example.com/two"}, 1, true},
+		{"Insecure URL", []string{"amqp://example.com"}, 1, true},
+		{"Secure URL", []string{"amqps://example.com"}, 1, true},
+		{"Invalid URL", []string{"http://example.com"}, 1, true},
+		{"No URLs", []string{}, 1, true},
+	}
+
+	for _, test := range testcases {
+		conn := newRabbitMQConn("exchange", test.urls, test.prefetchCount, test.prefetchGlobal)
+
+		if have, want := conn.prefetchCount, test.prefetchCount; have != want {
+			t.Errorf("%s: invalid prefetch count, want %d, have %d", test.title, want, have)
+		}
+
+		if have, want := conn.prefetchGlobal, test.prefetchGlobal; have != want {
+			t.Errorf("%s: invalid prefetch global setting, want %t, have %t", test.title, want, have)
 		}
 	}
 }

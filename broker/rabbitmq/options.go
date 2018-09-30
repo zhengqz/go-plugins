@@ -8,6 +8,8 @@ import (
 
 type durableQueueKey struct{}
 type headersKey struct{}
+type prefetchCountKey struct{}
+type prefetchGlobalKey struct{}
 type exchangeKey struct{}
 
 // DurableQueue creates a durable queue when subscribing.
@@ -37,5 +39,25 @@ func Exchange(e string) broker.Option {
 			o.Context = context.Background()
 		}
 		o.Context = context.WithValue(o.Context, exchangeKey{}, e)
+	}
+}
+
+// PrefetchCount ...
+func PrefetchCount(c int) broker.Option {
+	return func(o *broker.Options) {
+		if o.Context == nil {
+			o.Context = context.Background()
+		}
+		o.Context = context.WithValue(o.Context, prefetchCountKey{}, c)
+	}
+}
+
+// PrefetchGlobal creates a durable queue when subscribing.
+func PrefetchGlobal() broker.Option {
+	return func(o *broker.Options) {
+		if o.Context == nil {
+			o.Context = context.Background()
+		}
+		o.Context = context.WithValue(o.Context, prefetchGlobalKey{}, true)
 	}
 }
