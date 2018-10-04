@@ -172,7 +172,7 @@ func (g *grpcServer) serveStream(t transport.ServerTransport, stream *transport.
 	// get Go method from stream method
 	serviceName, methodName, err := mgrpc.ServiceMethod(stream.Method())
 	if err != nil {
-		if gerr := t.WriteStatus(stream, status.New(codes.InvalidArgument, err.Error())); err != nil {
+		if gerr := t.WriteStatus(stream, status.New(codes.InvalidArgument, err.Error())); gerr != nil {
 			log.Logf("grpc: Server.serveStream failed to write status: %v", gerr)
 		}
 		return
