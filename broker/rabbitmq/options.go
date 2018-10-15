@@ -11,6 +11,7 @@ type headersKey struct{}
 type prefetchCountKey struct{}
 type prefetchGlobalKey struct{}
 type exchangeKey struct{}
+type requeueOnErrorKey struct{}
 
 // DurableQueue creates a durable queue when subscribing.
 func DurableQueue() broker.SubscribeOption {
@@ -59,5 +60,15 @@ func PrefetchGlobal() broker.Option {
 			o.Context = context.Background()
 		}
 		o.Context = context.WithValue(o.Context, prefetchGlobalKey{}, true)
+	}
+}
+
+// RequeueOnError calls Nack(muliple:false, requeue:true) on amqp delivery when handler returns error
+func RequeueOnError() broker.Option {
+	return func(o *broker.Options) {
+		if o.Context == nil {
+			o.Context = context.Background()
+		}
+		o.Context = context.WithValue(o.Context, requeueOnErrorKey{}, true)
 	}
 }

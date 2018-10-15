@@ -189,7 +189,9 @@ func (r *rbroker) Subscribe(topic string, handler broker.Handler, opts ...broker
 			Header: header,
 			Body:   msg.Body,
 		}
-		handler(&publication{d: msg, m: m, t: msg.RoutingKey})
+		if err := handler(&publication{d: msg, m: m, t: msg.RoutingKey}); err != nil {
+			msg.Nack(false, r.getRequeueOnError())
+		}
 	}
 
 	sret := &subscriber{topic: topic, opts: opt, mayRun: true, r: r,
@@ -273,4 +275,11 @@ func (r *rbroker) getPrefetchGlobal() bool {
 		return e
 	}
 	return DefaultPrefetchGlobal
+}
+
+func (r *rbroker) getRequeueOnError() bool {
+	if e, ok := r.opts.Context.Value(requeueOnErrorKey{}).(bool); ok {
+		return e
+	}
+	return DefaultRequeueOnError
 }
