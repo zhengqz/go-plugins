@@ -164,6 +164,11 @@ func (r *rbroker) Subscribe(topic string, handler broker.Handler, opts ...broker
 		o(&opt)
 	}
 
+	requeueOnError := false
+	if opt.Context != nil {
+		requeueOnError, _ = opt.Context.Value(requeueOnErrorKey{}).(bool)
+	}
+
 	durableQueue := false
 	if opt.Context != nil {
 		durableQueue, _ = opt.Context.Value(durableQueueKey{}).(bool)
@@ -189,8 +194,8 @@ func (r *rbroker) Subscribe(topic string, handler broker.Handler, opts ...broker
 			Header: header,
 			Body:   msg.Body,
 		}
-		if err := handler(&publication{d: msg, m: m, t: msg.RoutingKey}); err != nil {
-			msg.Nack(false, r.getRequeueOnError())
+		if err := handler(&publication{d: msg, m: m, t: msg.RoutingKey}); err != nil && !opt.AutoAck {
+			msg.Nack(false, requeueOnError)
 		}
 	}
 
@@ -275,11 +280,4 @@ func (r *rbroker) getPrefetchGlobal() bool {
 		return e
 	}
 	return DefaultPrefetchGlobal
-}
-
-func (r *rbroker) getRequeueOnError() bool {
-	if e, ok := r.opts.Context.Value(requeueOnErrorKey{}).(bool); ok {
-		return e
-	}
-	return DefaultRequeueOnError
 }

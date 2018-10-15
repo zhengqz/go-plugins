@@ -33,6 +33,16 @@ func Headers(h map[string]interface{}) broker.SubscribeOption {
 	}
 }
 
+// RequeueOnError calls Nack(muliple:false, requeue:true) on amqp delivery when handler returns error
+func RequeueOnError() broker.SubscribeOption {
+	return func(o *broker.SubscribeOptions) {
+		if o.Context == nil {
+			o.Context = context.Background()
+		}
+		o.Context = context.WithValue(o.Context, requeueOnErrorKey{}, true)
+	}
+}
+
 // Exchange is an option to set the Exchange
 func Exchange(e string) broker.Option {
 	return func(o *broker.Options) {
@@ -60,15 +70,5 @@ func PrefetchGlobal() broker.Option {
 			o.Context = context.Background()
 		}
 		o.Context = context.WithValue(o.Context, prefetchGlobalKey{}, true)
-	}
-}
-
-// RequeueOnError calls Nack(muliple:false, requeue:true) on amqp delivery when handler returns error
-func RequeueOnError() broker.Option {
-	return func(o *broker.Options) {
-		if o.Context == nil {
-			o.Context = context.Background()
-		}
-		o.Context = context.WithValue(o.Context, requeueOnErrorKey{}, true)
 	}
 }
