@@ -20,6 +20,7 @@ func TestShard(t *testing.T) {
 		name string
 		args args
 		want *registry.Node
+		err  error
 	}
 
 	node1 := &registry.Node{
@@ -101,6 +102,7 @@ func TestShard(t *testing.T) {
 				count: 4,
 			},
 			want: nil,
+			err:  selector.ErrNoneAvailable,
 		},
 	}
 	for _, tt := range tests {
@@ -109,7 +111,7 @@ func TestShard(t *testing.T) {
 			next := getNext(fn, tt.args.nodes)
 
 			if next == nil {
-				t.Error("got nil next")
+				t.Error("Shard() got nil next")
 				return
 			}
 
@@ -117,14 +119,18 @@ func TestShard(t *testing.T) {
 			var got *registry.Node
 			for i := 0; i < tt.args.count; i++ {
 				got, err = next()
-				if err != nil {
-					t.Errorf("got error with next %v", err)
-					return
-				}
 			}
 
 			if got != tt.want {
 				t.Errorf("Shard() = %v, want %v", got, tt.want)
+			}
+
+			if tt.err != nil {
+				if err == nil || err.Error() != tt.err.Error() {
+					t.Errorf("Shard() error = %v, want %v", err, tt.err)
+				}
+			} else if err != nil {
+				t.Errorf("Shard() unexpected error = %v", err)
 			}
 		})
 	}
