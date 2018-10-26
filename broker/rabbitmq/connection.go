@@ -19,6 +19,7 @@ var (
 	DefaultRabbitURL      = "amqp://guest:guest@127.0.0.1:5672"
 	DefaultPrefetchCount  = 0
 	DefaultPrefetchGlobal = false
+	DefaultRequeueOnError = false
 
 	dial    = amqp.Dial
 	dialTLS = amqp.DialTLS

@@ -164,6 +164,11 @@ func (r *rbroker) Subscribe(topic string, handler broker.Handler, opts ...broker
 		o(&opt)
 	}
 
+	requeueOnError := false
+	if opt.Context != nil {
+		requeueOnError, _ = opt.Context.Value(requeueOnErrorKey{}).(bool)
+	}
+
 	durableQueue := false
 	if opt.Context != nil {
 		durableQueue, _ = opt.Context.Value(durableQueueKey{}).(bool)
@@ -189,7 +194,9 @@ func (r *rbroker) Subscribe(topic string, handler broker.Handler, opts ...broker
 			Header: header,
 			Body:   msg.Body,
 		}
-		handler(&publication{d: msg, m: m, t: msg.RoutingKey})
+		if err := handler(&publication{d: msg, m: m, t: msg.RoutingKey}); err != nil && !opt.AutoAck {
+			msg.Nack(false, requeueOnError)
+		}
 	}
 
 	sret := &subscriber{topic: topic, opts: opt, mayRun: true, r: r,
