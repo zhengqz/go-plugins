@@ -84,7 +84,7 @@ func (t *grpcTransportListener) Accept(fn func(transport.Socket)) error {
 	srv := grpc.NewServer(opts...)
 
 	// register service
-	pb.RegisterTransportServer(srv, &microTransport{fn: fn})
+	pb.RegisterTransportServer(srv, &microTransport{addr: t.listener.Addr().String(), fn: fn})
 
 	// start serving
 	return srv.Serve(t.listener)
@@ -132,6 +132,8 @@ func (t *grpcTransport) Dial(addr string, opts ...transport.DialOption) (transpo
 	return &grpcTransportClient{
 		conn:   conn,
 		stream: stream,
+		local:  "localhost",
+		remote: addr,
 	}, nil
 }
 

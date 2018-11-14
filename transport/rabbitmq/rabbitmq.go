@@ -32,17 +32,21 @@ type rmqtport struct {
 }
 
 type rmqtportClient struct {
-	rt    *rmqtport
-	addr  string
-	corId string
-	reply chan amqp.Delivery
+	rt     *rmqtport
+	addr   string
+	corId  string
+	local  string
+	remote string
+	reply  chan amqp.Delivery
 }
 
 type rmqtportSocket struct {
-	rt    *rmqtport
-	conn  *rabbitMQConn
-	d     *amqp.Delivery
-	close chan bool
+	rt     *rmqtport
+	conn   *rabbitMQConn
+	d      *amqp.Delivery
+	close  chan bool
+	local  string
+	remote string
 
 	sync.Mutex
 	r  chan *amqp.Delivery
@@ -64,6 +68,14 @@ var (
 
 func init() {
 	cmd.DefaultTransports["rabbitmq"] = NewTransport
+}
+
+func (r *rmqtportClient) Local() string {
+	return r.local
+}
+
+func (r *rmqtportClient) Remote() string {
+	return r.remote
 }
 
 func (r *rmqtportClient) Send(m *transport.Message) error {
@@ -131,6 +143,14 @@ func (r *rmqtportClient) Recv(m *transport.Message) error {
 func (r *rmqtportClient) Close() error {
 	r.rt.popReq(r.corId)
 	return nil
+}
+
+func (r *rmqtportSocket) Local() string {
+	return r.local
+}
+
+func (r *rmqtportSocket) Remote() string {
+	return r.remote
 }
 
 func (r *rmqtportSocket) Recv(m *transport.Message) error {
@@ -241,11 +261,13 @@ func (r *rmqtportListener) Accept(fn func(transport.Socket)) error {
 		r.RUnlock()
 		if !ok {
 			sock = &rmqtportSocket{
-				rt:    r.rt,
-				d:     &d,
-				r:     make(chan *amqp.Delivery, 1),
-				conn:  r.conn,
-				close: make(chan bool, 1),
+				rt:     r.rt,
+				d:      &d,
+				r:      make(chan *amqp.Delivery, 1),
+				conn:   r.conn,
+				close:  make(chan bool, 1),
+				local:  r.Addr(),
+				remote: d.CorrelationId,
 			}
 			r.Lock()
 			r.so[sock.d.CorrelationId] = sock
@@ -338,10 +360,12 @@ func (r *rmqtport) Dial(addr string, opts ...transport.DialOption) (transport.Cl
 	r.once.Do(r.init)
 
 	return &rmqtportClient{
-		rt:    r,
-		addr:  addr,
-		corId: id.String(),
-		reply: r.putReq(id.String()),
+		rt:     r,
+		addr:   addr,
+		corId:  id.String(),
+		reply:  r.putReq(id.String()),
+		local:  id.String(),
+		remote: addr,
 	}, nil
 }
 

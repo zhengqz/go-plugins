@@ -23,11 +23,13 @@ type ntport struct {
 }
 
 type ntportClient struct {
-	conn *nats.Conn
-	addr string
-	id   string
-	sub  *nats.Subscription
-	opts transport.Options
+	conn   *nats.Conn
+	addr   string
+	id     string
+	local  string
+	remote string
+	sub    *nats.Subscription
+	opts   transport.Options
 }
 
 type ntportSocket struct {
@@ -40,7 +42,9 @@ type ntportSocket struct {
 	sync.Mutex
 	bl []*nats.Msg
 
-	opts transport.Options
+	opts   transport.Options
+	local  string
+	remote string
 }
 
 type ntportListener struct {
@@ -111,6 +115,14 @@ func setAddrs(addrs []string) []string {
 	return cAddrs
 }
 
+func (n *ntportClient) Local() string {
+	return n.local
+}
+
+func (n *ntportClient) Remote() string {
+	return n.remote
+}
+
 func (n *ntportClient) Send(m *transport.Message) error {
 	b, err := n.opts.Codec.Marshal(m)
 	if err != nil {
@@ -161,6 +173,14 @@ func (n *ntportClient) Close() error {
 	n.sub.Unsubscribe()
 	n.conn.Close()
 	return nil
+}
+
+func (n *ntportSocket) Local() string {
+	return n.local
+}
+
+func (n *ntportSocket) Remote() string {
+	return n.remote
 }
 
 func (n *ntportSocket) Recv(m *transport.Message) error {
@@ -273,11 +293,13 @@ func (n *ntportListener) Accept(fn func(transport.Socket)) error {
 
 		if !ok {
 			sock = &ntportSocket{
-				conn:  n.conn,
-				m:     m,
-				r:     make(chan *nats.Msg, 1),
-				close: make(chan bool),
-				opts:  n.opts,
+				conn:   n.conn,
+				m:      m,
+				r:      make(chan *nats.Msg, 1),
+				close:  make(chan bool),
+				opts:   n.opts,
+				local:  n.Addr(),
+				remote: m.Reply,
 			}
 			n.Lock()
 			n.so[m.Reply] = sock
@@ -351,11 +373,13 @@ func (n *ntport) Dial(addr string, dialOpts ...transport.DialOption) (transport.
 	}
 
 	return &ntportClient{
-		conn: c,
-		addr: addr,
-		id:   id,
-		sub:  sub,
-		opts: n.opts,
+		conn:   c,
+		addr:   addr,
+		id:     id,
+		sub:    sub,
+		opts:   n.opts,
+		local:  id,
+		remote: addr,
 	}, nil
 }
 

@@ -47,6 +47,14 @@ func init() {
 	cmd.DefaultTransports["tcp"] = NewTransport
 }
 
+func (t *tcpTransportClient) Local() string {
+	return t.conn.LocalAddr().String()
+}
+
+func (t *tcpTransportClient) Remote() string {
+	return t.conn.RemoteAddr().String()
+}
+
 func (t *tcpTransportClient) Send(m *transport.Message) error {
 	// set timeout if its greater than 0
 	if t.timeout > time.Duration(0) {
@@ -68,6 +76,14 @@ func (t *tcpTransportClient) Recv(m *transport.Message) error {
 
 func (t *tcpTransportClient) Close() error {
 	return t.conn.Close()
+}
+
+func (t *tcpTransportSocket) Local() string {
+	return t.conn.LocalAddr().String()
+}
+
+func (t *tcpTransportSocket) Remote() string {
+	return t.conn.RemoteAddr().String()
 }
 
 func (t *tcpTransportSocket) Recv(m *transport.Message) error {
