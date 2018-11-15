@@ -282,7 +282,11 @@ func (r *rmqtportListener) accept(fn func(transport.Socket)) (bool, error) {
 		select {
 		case <-r.exit:
 			return true, nil
-		case d := <-deliveries:
+		case d, ok := <-deliveries:
+			if !ok {
+				return false, nil
+			}
+
 			r.RLock()
 			sock, ok := r.so[d.CorrelationId]
 			r.RUnlock()
