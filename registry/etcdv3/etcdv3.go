@@ -59,6 +59,14 @@ func configure(e *etcdv3Registry, opts ...registry.Option) error {
 		config.TLS = tlsConfig
 	}
 
+	if e.options.Context != nil {
+		u, ok := e.options.Context.Value(authKey{}).(*authCreds)
+		if ok {
+			config.Username = u.Username
+			config.Password = u.Password
+		}
+	}
+
 	var cAddrs []string
 
 	for _, addr := range e.options.Addrs {
