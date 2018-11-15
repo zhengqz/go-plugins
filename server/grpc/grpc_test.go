@@ -6,7 +6,7 @@ import (
 
 	"github.com/micro/go-micro/registry/mock"
 	"github.com/micro/go-micro/server"
-	"github.com/micro/grpc-go"
+	"google.golang.org/grpc"
 
 	pb "github.com/micro/examples/greeter/srv/proto/hello"
 )
@@ -58,7 +58,7 @@ func TestGRPCServer(t *testing.T) {
 		t.Fatalf("failed to dial server: %v", err)
 	}
 
-	testMethods := []string{"Say.Hello", "/helloworld.Say/Hello", "/greeter.helloworld.Say/Hello"}
+	testMethods := []string{"/helloworld.Say/Hello", "/greeter.helloworld.Say/Hello"}
 
 	for _, method := range testMethods {
 		rsp := pb.Response{}
