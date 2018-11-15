@@ -56,6 +56,7 @@ type rmqtportSocket struct {
 type rmqtportListener struct {
 	rt   *rmqtport
 	conn *rabbitMQConn
+	exit chan bool
 	addr string
 
 	sync.RWMutex
@@ -245,61 +246,88 @@ func (r *rmqtportListener) Addr() string {
 }
 
 func (r *rmqtportListener) Close() error {
+	r.exit <- true
 	r.conn.Close()
 	return nil
 }
 
 func (r *rmqtportListener) Accept(fn func(transport.Socket)) error {
+	for {
+		// connect if not connected
+		if !r.conn.IsConnected() {
+			// reinitialise
+			<-r.conn.Init(r.rt.opts.Secure, r.rt.opts.TLSConfig)
+		}
+
+		// accept connections
+		exit, err := r.accept(fn)
+		if err != nil {
+			return err
+		}
+
+		// connection closed
+		if exit {
+			return nil
+		}
+	}
+}
+
+func (r *rmqtportListener) accept(fn func(transport.Socket)) (bool, error) {
 	deliveries, err := r.conn.Consume(r.addr)
 	if err != nil {
-		return err
+		return false, err
 	}
 
-	for d := range deliveries {
-		r.RLock()
-		sock, ok := r.so[d.CorrelationId]
-		r.RUnlock()
-		if !ok {
-			sock = &rmqtportSocket{
-				rt:     r.rt,
-				d:      &d,
-				r:      make(chan *amqp.Delivery, 1),
-				conn:   r.conn,
-				close:  make(chan bool, 1),
-				local:  r.Addr(),
-				remote: d.CorrelationId,
-			}
-			r.Lock()
-			r.so[sock.d.CorrelationId] = sock
-			r.Unlock()
-
-			go func() {
-				<-sock.close
+	for {
+		select {
+		case <-r.exit:
+			return true, nil
+		case d := <-deliveries:
+			r.RLock()
+			sock, ok := r.so[d.CorrelationId]
+			r.RUnlock()
+			if !ok {
+				sock = &rmqtportSocket{
+					rt:     r.rt,
+					d:      &d,
+					r:      make(chan *amqp.Delivery, 1),
+					conn:   r.conn,
+					close:  make(chan bool, 1),
+					local:  r.Addr(),
+					remote: d.CorrelationId,
+				}
 				r.Lock()
-				delete(r.so, sock.d.CorrelationId)
+				r.so[sock.d.CorrelationId] = sock
 				r.Unlock()
-			}()
 
-			go fn(sock)
-		}
+				go func() {
+					<-sock.close
+					r.Lock()
+					delete(r.so, sock.d.CorrelationId)
+					r.Unlock()
+				}()
 
-		select {
-		case <-sock.close:
-			continue
-		default:
-		}
+				go fn(sock)
+			}
 
-		sock.Lock()
-		sock.bl = append(sock.bl, &d)
-		select {
-		case sock.r <- sock.bl[0]:
-			sock.bl = sock.bl[1:]
-		default:
+			select {
+			case <-sock.close:
+				continue
+			default:
+			}
+
+			sock.Lock()
+			sock.bl = append(sock.bl, &d)
+			select {
+			case sock.r <- sock.bl[0]:
+				sock.bl = sock.bl[1:]
+			default:
+			}
+			sock.Unlock()
 		}
-		sock.Unlock()
 	}
 
-	return nil
+	return false, nil
 }
 
 func (r *rmqtport) putReq(id string) chan amqp.Delivery {
@@ -385,6 +413,7 @@ func (r *rmqtport) Listen(addr string, opts ...transport.ListenOption) (transpor
 		rt:   r,
 		addr: addr,
 		conn: conn,
+		exit: make(chan bool, 1),
 		so:   make(map[string]*rmqtportSocket),
 	}, nil
 }
