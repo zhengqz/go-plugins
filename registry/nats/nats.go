@@ -139,7 +139,7 @@ func (n *natsRegistry) register(s *registry.Service) error {
 	defer n.Unlock()
 
 	// cache service
-	n.services[s.Name] = addServices(n.services[s.Name], []*registry.Service{s})
+	n.services[s.Name] = addServices(n.services[s.Name], cp([]*registry.Service{s}))
 
 	// create query listener
 	if n.listeners[s.Name] == nil {
@@ -162,14 +162,14 @@ func (n *natsRegistry) register(s *registry.Service) error {
 					return
 				}
 				n.RLock()
-				services = n.services[s.Name]
+				services = cp(n.services[s.Name])
 				n.RUnlock()
 			// it's a list request, but we're still only a
 			// subscriber for this service... so just get this service
 			// totally suboptimal
 			case "list":
 				n.RLock()
-				services = n.services[s.Name]
+				services = cp(n.services[s.Name])
 				n.RUnlock()
 			default:
 				// does not match
@@ -206,7 +206,7 @@ func (n *natsRegistry) deregister(s *registry.Service) error {
 	defer n.Unlock()
 
 	// cache leftover service
-	services := addServices(n.services[s.Name], []*registry.Service{s})
+	services := addServices(n.services[s.Name], cp([]*registry.Service{s}))
 	if len(services) > 0 {
 		n.services[s.Name] = services
 		return nil
