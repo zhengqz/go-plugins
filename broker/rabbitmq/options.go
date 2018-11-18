@@ -2,7 +2,6 @@ package rabbitmq
 
 import (
 	"context"
-
 	"github.com/micro/go-micro/broker"
 )
 
@@ -12,6 +11,7 @@ type prefetchCountKey struct{}
 type prefetchGlobalKey struct{}
 type exchangeKey struct{}
 type requeueOnErrorKey struct{}
+type deliveryMode struct{}
 
 // DurableQueue creates a durable queue when subscribing.
 func DurableQueue() broker.SubscribeOption {
@@ -70,5 +70,15 @@ func PrefetchGlobal() broker.Option {
 			o.Context = context.Background()
 		}
 		o.Context = context.WithValue(o.Context, prefetchGlobalKey{}, true)
+	}
+}
+
+// DeliveryMode sets a delivery mode for publishing
+func DeliveryMode(value uint8) broker.PublishOption {
+	return func(o *broker.PublishOptions) {
+		if o.Context == nil {
+			o.Context = context.Background()
+		}
+		o.Context = context.WithValue(o.Context, deliveryMode{}, value)
 	}
 }

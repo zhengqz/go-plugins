@@ -144,6 +144,17 @@ func (r *rbroker) Publish(topic string, msg *broker.Message, opts ...broker.Publ
 		Headers: amqp.Table{},
 	}
 
+	options := broker.PublishOptions{}
+	for _, o := range opts {
+		o(&options)
+	}
+
+	if options.Context != nil {
+		if value, ok := options.Context.Value(deliveryMode{}).(uint8); ok {
+			m.DeliveryMode = value
+		}
+	}
+
 	for k, v := range msg.Header {
 		m.Headers[k] = v
 	}
