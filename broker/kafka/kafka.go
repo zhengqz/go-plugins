@@ -6,11 +6,11 @@ import (
 	"sync"
 
 	"github.com/Shopify/sarama"
+	"github.com/google/uuid"
 	"github.com/micro/go-log"
 	"github.com/micro/go-micro/broker"
 	"github.com/micro/go-micro/broker/codec/json"
 	"github.com/micro/go-micro/cmd"
-	"github.com/pborman/uuid"
 	sc "gopkg.in/bsm/sarama-cluster.v2"
 )
 
@@ -168,7 +168,7 @@ func (k *kBroker) getSaramaClusterClient(topic string) (*sc.Client, error) {
 func (k *kBroker) Subscribe(topic string, handler broker.Handler, opts ...broker.SubscribeOption) (broker.Subscriber, error) {
 	opt := broker.SubscribeOptions{
 		AutoAck: true,
-		Queue:   uuid.NewUUID().String(),
+		Queue:   uuid.New().String(),
 	}
 
 	for _, o := range opts {

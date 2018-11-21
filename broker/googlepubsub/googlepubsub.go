@@ -6,9 +6,9 @@ import (
 	"time"
 
 	"cloud.google.com/go/pubsub"
+	"github.com/google/uuid"
 	"github.com/micro/go-micro/broker"
 	"github.com/micro/go-micro/cmd"
-	"github.com/pborman/uuid"
 	"google.golang.org/api/option"
 )
 
@@ -157,7 +157,7 @@ func (b *pubsubBroker) Publish(topic string, msg *broker.Message, opts ...broker
 	}
 
 	m := &pubsub.Message{
-		ID:         "m-" + uuid.NewUUID().String(),
+		ID:         "m-" + uuid.New().String(),
 		Data:       msg.Body,
 		Attributes: msg.Header,
 	}
@@ -171,7 +171,7 @@ func (b *pubsubBroker) Publish(topic string, msg *broker.Message, opts ...broker
 func (b *pubsubBroker) Subscribe(topic string, h broker.Handler, opts ...broker.SubscribeOption) (broker.Subscriber, error) {
 	options := broker.SubscribeOptions{
 		AutoAck: true,
-		Queue:   "q-" + uuid.NewUUID().String(),
+		Queue:   "q-" + uuid.New().String(),
 		Context: b.options.Context,
 	}
 
