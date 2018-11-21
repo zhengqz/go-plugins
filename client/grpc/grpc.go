@@ -5,7 +5,6 @@ import (
 	"bytes"
 	"context"
 	"crypto/tls"
-	errs "errors"
 	"fmt"
 	"sync"
 	"time"
@@ -14,7 +13,7 @@ import (
 	"github.com/micro/go-micro/client"
 	"github.com/micro/go-micro/cmd"
 	"github.com/micro/go-micro/codec"
-	errors "github.com/micro/go-micro/errors"
+	"github.com/micro/go-micro/errors"
 	"github.com/micro/go-micro/metadata"
 	"github.com/micro/go-micro/registry"
 	"github.com/micro/go-micro/selector"
@@ -31,10 +30,6 @@ type grpcClient struct {
 	opts client.Options
 	pool *pool
 }
-
-var (
-	errShutdown = errs.New("connection is shut down")
-)
 
 func init() {
 	cmd.DefaultClients["grpc"] = NewClient
