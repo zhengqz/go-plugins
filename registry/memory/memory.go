@@ -6,9 +6,9 @@ import (
 	"sync"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/micro/go-micro/cmd"
 	"github.com/micro/go-micro/registry"
-	"github.com/pborman/uuid"
 )
 
 type memoryRegistry struct {
@@ -120,7 +120,7 @@ func (m *memoryRegistry) Watch(opts ...registry.WatchOption) (registry.Watcher, 
 	w := &memoryWatcher{
 		exit: make(chan bool),
 		res:  make(chan *registry.Result),
-		id:   uuid.NewUUID().String(),
+		id:   uuid.New().String(),
 		wo:   wo,
 	}
 

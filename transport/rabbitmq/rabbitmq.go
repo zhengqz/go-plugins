@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"errors"
-	uuid "github.com/nu7hatch/gouuid"
+	"github.com/google/uuid"
 	"github.com/streadway/amqp"
 
 	"github.com/micro/go-micro/cmd"
@@ -384,7 +384,7 @@ func (r *rmqtport) handle(delivery amqp.Delivery) {
 }
 
 func (r *rmqtport) Dial(addr string, opts ...transport.DialOption) (transport.Client, error) {
-	id, err := uuid.NewV4()
+	id, err := uuid.NewRandom()
 	if err != nil {
 		return nil, err
 	}
@@ -403,7 +403,7 @@ func (r *rmqtport) Dial(addr string, opts ...transport.DialOption) (transport.Cl
 
 func (r *rmqtport) Listen(addr string, opts ...transport.ListenOption) (transport.Listener, error) {
 	if len(addr) == 0 || addr == ":0" {
-		id, err := uuid.NewV4()
+		id, err := uuid.NewRandom()
 		if err != nil {
 			return nil, err
 		}

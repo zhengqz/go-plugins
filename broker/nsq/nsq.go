@@ -7,11 +7,11 @@ import (
 	"sync"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/micro/go-micro/broker"
 	"github.com/micro/go-micro/broker/codec/json"
 	"github.com/micro/go-micro/cmd"
 	"github.com/nsqio/go-nsq"
-	"github.com/pborman/uuid"
 )
 
 type nsqBroker struct {
@@ -123,7 +123,7 @@ func (n *nsqBroker) Connect() error {
 	for _, c := range n.c {
 		channel := c.opts.Queue
 		if len(channel) == 0 {
-			channel = uuid.NewUUID().String() + "#ephemeral"
+			channel = uuid.New().String() + "#ephemeral"
 		}
 
 		cm, err := nsq.NewConsumer(c.topic, channel, n.config)
@@ -244,7 +244,7 @@ func (n *nsqBroker) Subscribe(topic string, handler broker.Handler, opts ...brok
 	}
 	channel := options.Queue
 	if len(channel) == 0 {
-		channel = uuid.NewUUID().String() + "#ephemeral"
+		channel = uuid.New().String() + "#ephemeral"
 	}
 	config := *n.config
 	config.MaxInFlight = maxInFlight
