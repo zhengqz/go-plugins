@@ -254,11 +254,6 @@ func (g *grpcServer) processRequest(stream grpc.ServerStream, service *service, 
 			return status.New(statusCode, statusDesc).Err()
 		}
 		if err := stream.SendMsg(replyv.Interface()); err != nil {
-			switch err := err.(type) {
-			default:
-				statusCode = codes.Unknown
-				statusDesc = err.Error()
-			}
 			return err
 		}
 		return status.New(statusCode, statusDesc).Err()
