@@ -6,7 +6,6 @@ import (
 	"io"
 	"os"
 
-	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 )
 
@@ -18,34 +17,6 @@ type rpcError struct {
 
 func (e *rpcError) Error() string {
 	return fmt.Sprintf("rpc error: code = %d desc = %s", e.code, e.desc)
-}
-
-// toRPCErr converts an error into a rpcError.
-func toRPCErr(err error) error {
-	switch err.(type) {
-	case *rpcError:
-		return err
-	default:
-		switch err {
-		case context.DeadlineExceeded:
-			return &rpcError{
-				code: codes.DeadlineExceeded,
-				desc: err.Error(),
-			}
-		case context.Canceled:
-			return &rpcError{
-				code: codes.Canceled,
-				desc: err.Error(),
-			}
-		case grpc.ErrClientConnClosing:
-			return &rpcError{
-				code: codes.FailedPrecondition,
-				desc: err.Error(),
-			}
-		}
-
-	}
-	return grpc.Errorf(codes.Unknown, "%v", err)
 }
 
 // convertCode converts a standard Go error into its canonical code. Note that
