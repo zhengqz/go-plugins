@@ -247,7 +247,7 @@ func (g *grpcClient) Call(ctx context.Context, req client.Request, rsp interface
 	} else {
 		// got a deadline so no need to setup context
 		// but we need to set the timeout we pass along
-		opt := client.WithRequestTimeout(d.Sub(time.Now()))
+		opt := client.WithRequestTimeout(time.Until(d))
 		opt(&callOpts)
 	}
 
