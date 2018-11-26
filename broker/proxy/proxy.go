@@ -1,5 +1,5 @@
-// Package sidecar is a broker using the micro sidecar
-package sidecar
+// Package proxy is a broker using the micro proxy
+package proxy
 
 import (
 	"bytes"

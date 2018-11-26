@@ -1,4 +1,4 @@
-package sidecar
+package proxy
 
 import (
 	"github.com/micro/go-micro/broker"

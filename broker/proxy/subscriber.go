@@ -1,4 +1,4 @@
-package sidecar
+package proxy
 
 import (
 	"encoding/json"
