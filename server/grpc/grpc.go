@@ -32,8 +32,13 @@ import (
 	"google.golang.org/grpc/status"
 )
 
+var (
+	// DefaultMaxMsgSize define maximum message size that server can send
+	// or receive.  Default value is 4MB.
+	DefaultMaxMsgSize = 1024 * 1024 * 4
+)
+
 const (
-	defaultMaxMsgSize  = 1024 * 1024 * 4 // use 4MB as the default message size limit
 	defaultContentType = "application/grpc"
 )
 
@@ -70,7 +75,11 @@ func newGRPCServer(opts ...server.Option) server.Server {
 		exit:        make(chan chan error),
 	}
 
+	maxMsgSize := gsrv.getMaxMsgSize()
+
 	gopts := []grpc.ServerOption{
+		grpc.MaxRecvMsgSize(maxMsgSize),
+		grpc.MaxSendMsgSize(maxMsgSize),
 		grpc.UnknownServiceHandler(gsrv.handler),
 	}
 
@@ -81,6 +90,17 @@ func newGRPCServer(opts ...server.Option) server.Server {
 	// set grpc service
 	gsrv.srv = grpc.NewServer(gopts...)
 	return gsrv
+}
+
+func (g *grpcServer) getMaxMsgSize() int {
+	if g.opts.Context == nil {
+		return DefaultMaxMsgSize
+	}
+	s, ok := g.opts.Context.Value(maxMsgSizeKey{}).(int)
+	if !ok {
+		return DefaultMaxMsgSize
+	}
+	return s
 }
 
 func (g *grpcServer) getCredentials() credentials.TransportCredentials {
@@ -234,11 +254,6 @@ func (g *grpcServer) processRequest(stream grpc.ServerStream, service *service, 
 			return status.New(statusCode, statusDesc).Err()
 		}
 		if err := stream.SendMsg(replyv.Interface()); err != nil {
-			switch err := err.(type) {
-			default:
-				statusCode = codes.Unknown
-				statusDesc = err.Error()
-			}
 			return err
 		}
 		return status.New(statusCode, statusDesc).Err()
