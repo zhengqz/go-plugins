@@ -153,7 +153,7 @@ func (g *grpcClient) stream(ctx context.Context, address string, req client.Requ
 		dialCtx, cancel = context.WithCancel(ctx)
 	}
 	defer cancel()
-	cc, err := grpc.DialContext(dialCtx, address, grpc.WithCodec(cf), g.secure())
+	cc, err := grpc.DialContext(dialCtx, address, grpc.WithDefaultCallOptions(grpc.CallCustomCodec(cf)), g.secure())
 	if err != nil {
 		return nil, errors.InternalServerError("go.micro.client", fmt.Sprintf("Error sending request: %v", err))
 	}
@@ -164,7 +164,7 @@ func (g *grpcClient) stream(ctx context.Context, address string, req client.Requ
 		ServerStreams: true,
 	}
 
-	st, err := cc.NewStream(ctx, desc, methodToGRPC(req.Method(), req.Request()))
+	st, err := cc.NewStream(ctx, desc, methodToGRPC(req.Method(), req.Request()), grpc.CallContentSubtype(cf.Name()))
 	if err != nil {
 		return nil, errors.InternalServerError("go.micro.client", fmt.Sprintf("Error creating stream: %v", err))
 	}
