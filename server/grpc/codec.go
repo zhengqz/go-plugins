@@ -1,8 +1,8 @@
 package grpc
 
 import (
-	"fmt"
 	"encoding/json"
+	"fmt"
 
 	"github.com/micro/go-micro/codec"
 	"github.com/micro/go-micro/codec/jsonrpc"
@@ -35,22 +35,22 @@ func (jsonCodec) Name() string {
 }
 
 func (bytesCodec) Marshal(v interface{}) ([]byte, error) {
-        b, ok := v.(*[]byte)
-        if !ok {
-                return nil, fmt.Errorf("failed to marshal: %v is not type of *[]byte", v)
-        }
-        return *b, nil
+	b, ok := v.(*[]byte)
+	if !ok {
+		return nil, fmt.Errorf("failed to marshal: %v is not type of *[]byte", v)
+	}
+	return *b, nil
 }
 
 func (bytesCodec) Unmarshal(data []byte, v interface{}) error {
-        b, ok := v.(*[]byte)
-        if !ok {
-                return fmt.Errorf("failed to unmarshal: %v is not type of *[]byte", v)
-        }
-        *b = data
-        return nil
+	b, ok := v.(*[]byte)
+	if !ok {
+		return fmt.Errorf("failed to unmarshal: %v is not type of *[]byte", v)
+	}
+	*b = data
+	return nil
 }
 
 func (bytesCodec) Name() string {
-        return "bytes"
+	return "bytes"
 }
