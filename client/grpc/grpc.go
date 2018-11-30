@@ -32,6 +32,9 @@ type grpcClient struct {
 }
 
 func init() {
+	encoding.RegisterCodec(jsonCodec{})
+	encoding.RegisterCodec(bytesCodec{})
+
 	cmd.DefaultClients["grpc"] = NewClient
 }
 
@@ -93,7 +96,7 @@ func (g *grpcClient) call(ctx context.Context, address string, req client.Reques
 
 	var grr error
 
-	cc, err := g.pool.getConn(address, grpc.WithCodec(cf),
+	cc, err := g.pool.getConn(address, grpc.WithDefaultCallOptions(grpc.CallCustomCodec(cf)),
 		grpc.WithTimeout(opts.DialTimeout), g.secure(),
 		grpc.WithDefaultCallOptions(grpc.MaxCallRecvMsgSize(maxRecvMsgSize)))
 	if err != nil {
@@ -107,7 +110,7 @@ func (g *grpcClient) call(ctx context.Context, address string, req client.Reques
 	ch := make(chan error, 1)
 
 	go func() {
-		err := cc.Invoke(ctx, methodToGRPC(req.Method(), req.Request()), req.Request(), rsp)
+		err := cc.Invoke(ctx, methodToGRPC(req.Method(), req.Request()), req.Request(), rsp, grpc.CallContentSubtype(cf.Name()))
 		ch <- microError(err)
 	}()
 

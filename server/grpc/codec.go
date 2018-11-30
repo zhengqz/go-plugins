@@ -1,6 +1,7 @@
 package grpc
 
 import (
+	"fmt"
 	"encoding/json"
 
 	"github.com/micro/go-micro/codec"
@@ -9,6 +10,7 @@ import (
 )
 
 type jsonCodec struct{}
+type bytesCodec struct{}
 
 var (
 	defaultRPCCodecs = map[string]codec.NewCodec{
@@ -30,4 +32,25 @@ func (jsonCodec) Unmarshal(data []byte, v interface{}) error {
 
 func (jsonCodec) Name() string {
 	return "json"
+}
+
+func (bytesCodec) Marshal(v interface{}) ([]byte, error) {
+        b, ok := v.(*[]byte)
+        if !ok {
+                return nil, fmt.Errorf("failed to marshal: %v is not type of *[]byte", v)
+        }
+        return *b, nil
+}
+
+func (bytesCodec) Unmarshal(data []byte, v interface{}) error {
+        b, ok := v.(*[]byte)
+        if !ok {
+                return fmt.Errorf("failed to unmarshal: %v is not type of *[]byte", v)
+        }
+        *b = data
+        return nil
+}
+
+func (bytesCodec) Name() string {
+        return "bytes"
 }
