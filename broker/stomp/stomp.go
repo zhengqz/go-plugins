@@ -204,7 +204,7 @@ func (r *rbroker) Subscribe(topic string, handler broker.Handler, opts ...broker
 					Body:   msg.Body,
 				}
 				// Handle the publication
-				handler(&publication{msg: msg, m: m, topic: topic})
+				handler(&publication{msg: msg, m: m, topic: topic, broker: r})
 			}(msg)
 		}
 	}()
