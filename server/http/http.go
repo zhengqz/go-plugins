@@ -3,14 +3,30 @@ package http
 
 import (
 	"errors"
+	"fmt"
 	"net"
 	"net/http"
+	"sort"
 	"sync"
 
-	"github.com/micro/go-log"
+	log "github.com/micro/go-log"
+	"github.com/micro/go-micro/broker"
 	"github.com/micro/go-micro/cmd"
+	"github.com/micro/go-micro/codec"
 	"github.com/micro/go-micro/registry"
 	"github.com/micro/go-micro/server"
+	"github.com/micro/go-plugins/codec/jsonrpc"
+	"github.com/micro/go-plugins/codec/protorpc"
+)
+
+var (
+	defaultCodecs = map[string]codec.NewCodec{
+		"application/json":         jsonrpc.NewCodec,
+		"application/json-rpc":     jsonrpc.NewCodec,
+		"application/protobuf":     protorpc.NewCodec,
+		"application/proto-rpc":    protorpc.NewCodec,
+		"application/octet-stream": protorpc.NewCodec,
+	}
 )
 
 type httpServer struct {
@@ -19,10 +35,23 @@ type httpServer struct {
 	hd           server.Handler
 	exit         chan chan error
 	registerOnce sync.Once
+	subscribers  map[*httpSubscriber][]broker.Subscriber
+	// used for first registration
+	registered bool
 }
 
 func init() {
 	cmd.DefaultServers["http"] = NewServer
+}
+
+func (h *httpServer) newCodec(contentType string) (codec.NewCodec, error) {
+	if cf, ok := h.opts.Codecs[contentType]; ok {
+		return cf, nil
+	}
+	if cf, ok := defaultCodecs[contentType]; ok {
+		return cf, nil
+	}
+	return nil, fmt.Errorf("Unsupported Content-Type: %s", contentType)
 }
 
 func (h *httpServer) Options() server.Options {
@@ -79,20 +108,30 @@ func (h *httpServer) NewHandler(handler interface{}, opts ...server.HandlerOptio
 }
 
 func (h *httpServer) NewSubscriber(topic string, handler interface{}, opts ...server.SubscriberOption) server.Subscriber {
-	var options server.SubscriberOptions
-	for _, o := range opts {
-		o(&options)
-	}
-
-	return &httpSubscriber{
-		opts:  options,
-		topic: topic,
-		hd:    handler,
-	}
+	return newSubscriber(topic, handler, opts...)
 }
 
-func (h *httpServer) Subscribe(s server.Subscriber) error {
-	return errors.New("subscribe is not supported")
+func (h *httpServer) Subscribe(sb server.Subscriber) error {
+	sub, ok := sb.(*httpSubscriber)
+	if !ok {
+		return fmt.Errorf("invalid subscriber: expected *httpSubscriber")
+	}
+	if len(sub.handlers) == 0 {
+		return fmt.Errorf("invalid subscriber: no handler functions")
+	}
+
+	if err := validateSubscriber(sb); err != nil {
+		return err
+	}
+
+	h.Lock()
+	defer h.Unlock()
+	_, ok = h.subscribers[sub]
+	if ok {
+		return fmt.Errorf("subscriber %v already exists", h)
+	}
+	h.subscribers[sub] = nil
+	return nil
 }
 
 func (h *httpServer) Register() error {
@@ -104,6 +143,22 @@ func (h *httpServer) Register() error {
 	service := serviceDef(opts)
 	service.Endpoints = eps
 
+	h.Lock()
+	var subscriberList []*httpSubscriber
+	for e := range h.subscribers {
+		// Only advertise non internal subscribers
+		if !e.Options().Internal {
+			subscriberList = append(subscriberList, e)
+		}
+	}
+	sort.Slice(subscriberList, func(i, j int) bool {
+		return subscriberList[i].topic > subscriberList[j].topic
+	})
+	for _, e := range subscriberList {
+		service.Endpoints = append(service.Endpoints, e.Endpoints()...)
+	}
+	h.Unlock()
+
 	rOpts := []registry.RegisterOption{
 		registry.RegisterTTL(opts.RegisterTTL),
 	}
@@ -112,7 +167,31 @@ func (h *httpServer) Register() error {
 		log.Logf("Registering node: %s", opts.Name+"-"+opts.Id)
 	})
 
-	return opts.Registry.Register(service, rOpts...)
+	if err := opts.Registry.Register(service, rOpts...); err != nil {
+		return err
+	}
+
+	h.Lock()
+	defer h.Unlock()
+
+	if h.registered {
+		return nil
+	}
+	h.registered = true
+
+	for sb, _ := range h.subscribers {
+		handler := h.createSubHandler(sb, opts)
+		var subOpts []broker.SubscribeOption
+		if queue := sb.Options().Queue; len(queue) > 0 {
+			subOpts = append(subOpts, broker.Queue(queue))
+		}
+		sub, err := opts.Broker.Subscribe(sb.Topic(), handler, subOpts...)
+		if err != nil {
+			return err
+		}
+		h.subscribers[sb] = []broker.Subscriber{sub}
+	}
+	return nil
 }
 
 func (h *httpServer) Deregister() error {
@@ -123,7 +202,26 @@ func (h *httpServer) Deregister() error {
 	log.Logf("Deregistering node: %s", opts.Name+"-"+opts.Id)
 
 	service := serviceDef(opts)
-	return opts.Registry.Deregister(service)
+	if err := opts.Registry.Deregister(service); err != nil {
+		return err
+	}
+
+	h.Lock()
+	if !h.registered {
+		h.Unlock()
+		return nil
+	}
+	h.registered = false
+
+	for sb, subs := range h.subscribers {
+		for _, sub := range subs {
+			log.Logf("Unsubscribing from topic: %s", sub.Topic())
+			sub.Unsubscribe()
+		}
+		h.subscribers[sb] = nil
+	}
+	h.Unlock()
+	return nil
 }
 
 func (h *httpServer) Start() error {
@@ -170,8 +268,9 @@ func (h *httpServer) String() string {
 
 func newServer(opts ...server.Option) server.Server {
 	return &httpServer{
-		opts: newOptions(opts...),
-		exit: make(chan chan error),
+		opts:        newOptions(opts...),
+		exit:        make(chan chan error),
+		subscribers: make(map[*httpSubscriber][]broker.Subscriber),
 	}
 }
 
