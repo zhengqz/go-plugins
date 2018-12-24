@@ -68,6 +68,6 @@ func (w gzipWriter) Write(b []byte) (int, error) {
 	return w.Writer.Write(b)
 }
 
-func New() plugin.Plugin {
+func NewPlugin() plugin.Plugin {
 	return new(gzipper)
 }
