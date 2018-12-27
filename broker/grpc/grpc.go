@@ -16,6 +16,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/micro/go-log"
 	"github.com/micro/go-micro/broker"
+	"github.com/micro/go-micro/cmd"
 	merr "github.com/micro/go-micro/errors"
 	"github.com/micro/go-micro/registry"
 	proto "github.com/micro/go-plugins/broker/grpc/proto"
@@ -69,6 +70,8 @@ var (
 
 func init() {
 	rand.Seed(time.Now().Unix())
+
+	cmd.DefaultBrokers["grpc"] = NewBroker
 }
 
 func newConfig(config *tls.Config) *tls.Config {
