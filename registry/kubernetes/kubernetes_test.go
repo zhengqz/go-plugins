@@ -12,7 +12,6 @@ import (
 	"github.com/micro/go-log"
 	"github.com/micro/go-micro/registry"
 	"github.com/micro/go-micro/selector"
-	"github.com/micro/go-micro/selector/cache"
 	"github.com/micro/go-plugins/registry/kubernetes/client"
 	"github.com/micro/go-plugins/registry/kubernetes/client/mock"
 )
@@ -427,7 +426,7 @@ func TestListServices(t *testing.T) {
 
 func TestWatcher(t *testing.T) {
 	r := setupRegistry()
-	c := cache.NewSelector(selector.Registry(r))
+	c := selector.NewSelector(selector.Registry(r))
 
 	// wait for watcher to get setup
 	time.Sleep(time.Millisecond)
