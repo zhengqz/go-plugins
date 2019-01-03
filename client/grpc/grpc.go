@@ -93,12 +93,16 @@ func (g *grpcClient) call(ctx context.Context, address string, req client.Reques
 	}
 
 	maxRecvMsgSize := g.maxRecvMsgSizeValue()
+	maxSendMsgSize := g.maxSendMsgSizeValue()
 
 	var grr error
 
 	cc, err := g.pool.getConn(address, grpc.WithDefaultCallOptions(grpc.CallCustomCodec(cf)),
 		grpc.WithTimeout(opts.DialTimeout), g.secure(),
-		grpc.WithDefaultCallOptions(grpc.MaxCallRecvMsgSize(maxRecvMsgSize)))
+		grpc.WithDefaultCallOptions(
+			grpc.MaxCallRecvMsgSize(maxRecvMsgSize),
+			grpc.MaxCallSendMsgSize(maxSendMsgSize),
+		))
 	if err != nil {
 		return errors.InternalServerError("go.micro.client", fmt.Sprintf("Error sending request: %v", err))
 	}
@@ -184,6 +188,17 @@ func (g *grpcClient) maxRecvMsgSizeValue() int {
 	v := g.opts.Context.Value(maxRecvMsgSizeKey{})
 	if v == nil {
 		return DefaultMaxRecvMsgSize
+	}
+	return v.(int)
+}
+
+func (g *grpcClient) maxSendMsgSizeValue() int {
+	if g.opts.Context == nil {
+		return DefaultMaxSendMsgSize
+	}
+	v := g.opts.Context.Value(maxSendMsgSizeKey{})
+	if v == nil {
+		return DefaultMaxSendMsgSize
 	}
 	return v.(int)
 }
