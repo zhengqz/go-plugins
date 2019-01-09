@@ -212,17 +212,20 @@ func (g *grpcServer) processRequest(stream grpc.ServerStream, service *service, 
 		function := mtype.method.Func
 		var returnValues []reflect.Value
 
+		cc := defaultGRPCCodecs[ct]
+		b, _ := cc.Marshal(argv.Interface())
+
 		// create a client.Request
 		r := &rpcRequest{
 			service:     g.opts.Name,
 			contentType: ct,
 			method:      fmt.Sprintf("%s.%s", service.name, mtype.method.Name),
-			request:     argv.Interface(),
+			body:        b,
 		}
 
 		// define the handler func
 		fn := func(ctx context.Context, req server.Request, rsp interface{}) error {
-			returnValues = function.Call([]reflect.Value{service.rcvr, mtype.prepareContext(ctx), reflect.ValueOf(req.Request()), reflect.ValueOf(rsp)})
+			returnValues = function.Call([]reflect.Value{service.rcvr, mtype.prepareContext(ctx), reflect.ValueOf(argv.Interface()), reflect.ValueOf(rsp)})
 
 			// The return value for the method is an error.
 			if err := returnValues[0].Interface(); err != nil {
