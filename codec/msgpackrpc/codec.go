@@ -36,7 +36,7 @@ func (c *msgpackCodec) ReadHeader(m *codec.Message, mt codec.MessageType) error 
 		}
 
 		c.body = h.hasBody
-		m.Id = uint64(h.ID)
+		m.Id = h.ID
 		m.Method = h.Method
 
 	case codec.Response:
@@ -47,7 +47,7 @@ func (c *msgpackCodec) ReadHeader(m *codec.Message, mt codec.MessageType) error 
 		}
 
 		c.body = h.hasBody
-		m.Id = uint64(h.ID)
+		m.Id = h.ID
 		m.Error = h.Error
 
 	case codec.Publication:
@@ -95,7 +95,7 @@ func (c *msgpackCodec) Write(m *codec.Message, b interface{}) error {
 	switch m.Type {
 	case codec.Request:
 		h := Request{
-			ID:     uint32(m.Id),
+			ID:     m.Id,
 			Method: m.Method,
 			Body:   b,
 		}
@@ -104,7 +104,7 @@ func (c *msgpackCodec) Write(m *codec.Message, b interface{}) error {
 
 	case codec.Response:
 		h := Response{
-			ID:   uint32(m.Id),
+			ID:   m.Id,
 			Body: b,
 		}
 

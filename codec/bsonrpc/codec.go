@@ -21,12 +21,12 @@ type serverCodec struct {
 
 type request struct {
 	ServiceMethod string
-	Seq           uint64
+	Seq           string
 }
 
 type response struct {
 	ServiceMethod string
-	Seq           uint64
+	Seq           string
 	Error         string
 }
 
