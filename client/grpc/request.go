@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/micro/go-micro/client"
+	"github.com/micro/go-micro/codec"
 )
 
 type grpcRequest struct {
@@ -74,7 +75,11 @@ func (g *grpcRequest) Method() string {
 	return g.method
 }
 
-func (g *grpcRequest) Request() interface{} {
+func (g *grpcRequest) Codec() codec.Writer {
+	return nil
+}
+
+func (g *grpcRequest) Body() interface{} {
 	return g.request
 }
 
