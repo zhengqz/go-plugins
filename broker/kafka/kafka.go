@@ -9,8 +9,8 @@ import (
 	"github.com/google/uuid"
 	"github.com/micro/go-log"
 	"github.com/micro/go-micro/broker"
-	"github.com/micro/go-micro/codec/json"
 	"github.com/micro/go-micro/cmd"
+	"github.com/micro/go-micro/codec/json"
 	sc "gopkg.in/bsm/sarama-cluster.v2"
 )
 

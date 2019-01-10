@@ -9,9 +9,9 @@ import (
 
 	"github.com/gomodule/redigo/redis"
 	"github.com/micro/go-micro/broker"
+	"github.com/micro/go-micro/cmd"
 	"github.com/micro/go-micro/codec"
 	"github.com/micro/go-micro/codec/json"
-	"github.com/micro/go-micro/cmd"
 )
 
 func init() {
