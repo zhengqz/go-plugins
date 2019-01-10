@@ -114,7 +114,7 @@ func (g *grpcClient) call(ctx context.Context, address string, req client.Reques
 	ch := make(chan error, 1)
 
 	go func() {
-		err := cc.Invoke(ctx, methodToGRPC(req.Method(), req.Body()), req.Body(), rsp, grpc.CallContentSubtype(cf.Name()))
+		err := cc.Invoke(ctx, methodToGRPC(req.Endpoint(), req.Body()), req.Body(), rsp, grpc.CallContentSubtype(cf.Name()))
 		ch <- microError(err)
 	}()
 
@@ -163,12 +163,12 @@ func (g *grpcClient) stream(ctx context.Context, address string, req client.Requ
 	}
 
 	desc := &grpc.StreamDesc{
-		StreamName:    req.Service() + req.Method(),
+		StreamName:    req.Service() + req.Endpoint(),
 		ClientStreams: true,
 		ServerStreams: true,
 	}
 
-	st, err := cc.NewStream(ctx, desc, methodToGRPC(req.Method(), req.Body()), grpc.CallContentSubtype(cf.Name()))
+	st, err := cc.NewStream(ctx, desc, methodToGRPC(req.Endpoint(), req.Body()), grpc.CallContentSubtype(cf.Name()))
 	if err != nil {
 		return nil, errors.InternalServerError("go.micro.client", fmt.Sprintf("Error creating stream: %v", err))
 	}

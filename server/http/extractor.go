@@ -44,7 +44,7 @@ func serviceDef(opts server.Options) *registry.Service {
 	node.Metadata["server"] = "http"
 	node.Metadata["broker"] = opts.Broker.String()
 	node.Metadata["registry"] = opts.Registry.String()
-	
+
 	return &registry.Service{
 		Name:    opts.Name,
 		Version: opts.Version,

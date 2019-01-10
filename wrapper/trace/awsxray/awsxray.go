@@ -19,7 +19,7 @@ func (x *xrayWrapper) Call(ctx context.Context, req client.Request, rsp interfac
 	s := getSegment(x.opts.Name, ctx)
 
 	defer func() {
-		setCallStatus(s, req.Service(), req.Method(), err)
+		setCallStatus(s, req.Service(), req.Endpoint(), err)
 		go record(x.x, s)
 	}()
 
@@ -47,7 +47,7 @@ func NewCallWrapper(opts ...Option) client.CallWrapper {
 			s := getSegment(options.Name, ctx)
 
 			defer func() {
-				setCallStatus(s, addr, req.Method(), err)
+				setCallStatus(s, addr, req.Endpoint(), err)
 				go record(x, s)
 			}()
 
@@ -91,14 +91,14 @@ func NewHandlerWrapper(opts ...Option) server.HandlerWrapper {
 			name := options.Name
 			if len(name) == 0 {
 				// default name
-				name = req.Service() + "." + req.Method()
+				name = req.Service() + "." + req.Endpoint()
 			}
 
 			var err error
 			s := getSegment(name, ctx)
 
 			defer func() {
-				setCallStatus(s, req.Service(), req.Method(), err)
+				setCallStatus(s, req.Service(), req.Endpoint(), err)
 				go record(x, s)
 			}()
 

@@ -37,7 +37,7 @@ func traceIntoContext(ctx context.Context, tracer opentracing.Tracer, name strin
 }
 
 func (o *otWrapper) Call(ctx context.Context, req client.Request, rsp interface{}, opts ...client.CallOption) error {
-	name := fmt.Sprintf("%s.%s", req.Service(), req.Method())
+	name := fmt.Sprintf("%s.%s", req.Service(), req.Endpoint())
 	ctx, span, err := traceIntoContext(ctx, o.ot, name)
 	if err != nil {
 		return err
@@ -67,7 +67,7 @@ func NewClientWrapper(ot opentracing.Tracer) client.Wrapper {
 func NewCallWrapper(ot opentracing.Tracer) client.CallWrapper {
 	return func(cf client.CallFunc) client.CallFunc {
 		return func(ctx context.Context, addr string, req client.Request, rsp interface{}, opts client.CallOptions) error {
-			name := fmt.Sprintf("%s.%s", req.Service(), req.Method())
+			name := fmt.Sprintf("%s.%s", req.Service(), req.Endpoint())
 			ctx, span, err := traceIntoContext(ctx, ot, name)
 			if err != nil {
 				return err
@@ -82,7 +82,7 @@ func NewCallWrapper(ot opentracing.Tracer) client.CallWrapper {
 func NewHandlerWrapper(ot opentracing.Tracer) server.HandlerWrapper {
 	return func(h server.HandlerFunc) server.HandlerFunc {
 		return func(ctx context.Context, req server.Request, rsp interface{}) error {
-			name := fmt.Sprintf("%s.%s", req.Service(), req.Method())
+			name := fmt.Sprintf("%s.%s", req.Service(), req.Endpoint())
 			ctx, span, err := traceIntoContext(ctx, ot, name)
 			if err != nil {
 				return err

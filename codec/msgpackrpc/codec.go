@@ -37,7 +37,7 @@ func (c *msgpackCodec) ReadHeader(m *codec.Message, mt codec.MessageType) error 
 
 		c.body = h.hasBody
 		m.Id = h.ID
-		m.Method = h.Method
+		m.Endpoint = h.Method
 
 	case codec.Response:
 		var h Response
@@ -58,7 +58,7 @@ func (c *msgpackCodec) ReadHeader(m *codec.Message, mt codec.MessageType) error 
 		}
 
 		c.body = h.hasBody
-		m.Method = h.Method
+		m.Endpoint = h.Method
 
 	default:
 		return errors.New("Unrecognized message type")
@@ -96,7 +96,7 @@ func (c *msgpackCodec) Write(m *codec.Message, b interface{}) error {
 	case codec.Request:
 		h := Request{
 			ID:     m.Id,
-			Method: m.Method,
+			Method: m.Endpoint,
 			Body:   b,
 		}
 
@@ -114,7 +114,7 @@ func (c *msgpackCodec) Write(m *codec.Message, b interface{}) error {
 
 	case codec.Publication:
 		h := Notification{
-			Method: m.Method,
+			Method: m.Endpoint,
 			Body:   b,
 		}
 

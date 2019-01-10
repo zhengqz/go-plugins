@@ -28,7 +28,7 @@ func (r *rpcRequest) Service() string {
 	return r.service
 }
 
-func (r *rpcRequest) Method() string {
+func (r *rpcRequest) Endpoint() string {
 	return r.method
 }
 

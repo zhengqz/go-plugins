@@ -251,7 +251,7 @@ func (h *httpServer) Start() error {
 	go func() {
 		ch := <-h.exit
 		ch <- ln.Close()
-		
+
 		opts.Broker.Disconnect()
 	}()
 
