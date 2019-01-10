@@ -9,7 +9,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/micro/go-log"
 	"github.com/micro/go-micro/broker"
-	"github.com/micro/go-micro/broker/codec/json"
+	"github.com/micro/go-micro/codec/json"
 	"github.com/micro/go-micro/cmd"
 	sc "gopkg.in/bsm/sarama-cluster.v2"
 )
@@ -222,7 +222,7 @@ func (k *kBroker) String() string {
 func NewBroker(opts ...broker.Option) broker.Broker {
 	options := broker.Options{
 		// default to json codec
-		Codec:   json.NewCodec(),
+		Codec:   json.Marshaler{},
 		Context: context.Background(),
 	}
 

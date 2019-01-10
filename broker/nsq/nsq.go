@@ -9,7 +9,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/micro/go-micro/broker"
-	"github.com/micro/go-micro/broker/codec/json"
+	"github.com/micro/go-micro/codec/json"
 	"github.com/micro/go-micro/cmd"
 	"github.com/nsqio/go-nsq"
 )
@@ -329,7 +329,7 @@ func (s *subscriber) Unsubscribe() error {
 func NewBroker(opts ...broker.Option) broker.Broker {
 	options := broker.Options{
 		// Default codec
-		Codec: json.NewCodec(),
+		Codec: json.Marshaler{},
 		// Default context
 		Context: context.Background(),
 	}

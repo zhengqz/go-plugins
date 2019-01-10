@@ -9,8 +9,8 @@ import (
 
 	"github.com/gomodule/redigo/redis"
 	"github.com/micro/go-micro/broker"
-	"github.com/micro/go-micro/broker/codec"
-	"github.com/micro/go-micro/broker/codec/json"
+	"github.com/micro/go-micro/codec"
+	"github.com/micro/go-micro/codec/json"
 	"github.com/micro/go-micro/cmd"
 )
 
@@ -42,7 +42,7 @@ func (p *publication) Ack() error {
 
 // subscriber proxies and handles Redis messages as broker publications.
 type subscriber struct {
-	codec  codec.Codec
+	codec  codec.Marshaler
 	conn   *redis.PubSubConn
 	topic  string
 	handle broker.Handler
@@ -251,7 +251,7 @@ func NewBroker(opts ...broker.Option) broker.Broker {
 
 	// Initialize with empty broker options.
 	options := broker.Options{
-		Codec:   json.NewCodec(),
+		Codec:   json.Marshaler{},
 		Context: context.WithValue(context.Background(), optionsKey, bopts),
 	}
 
