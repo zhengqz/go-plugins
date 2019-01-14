@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/micro/go-micro/client"
-	"github.com/micro/go-micro/registry/mock"
+	"github.com/micro/go-micro/registry/memory"
 	"github.com/micro/go-micro/selector"
 	"github.com/sony/gobreaker"
 
@@ -13,7 +13,7 @@ import (
 
 func TestBreaker(t *testing.T) {
 	// setup
-	r := mock.NewRegistry()
+	r := memory.NewRegistry()
 	s := selector.NewSelector(selector.Registry(r))
 
 	c := client.NewClient(

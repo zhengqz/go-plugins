@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/micro/go-micro/registry/mock"
+	"github.com/micro/go-micro/registry/memory"
 	"github.com/micro/go-micro/server"
 	"google.golang.org/grpc"
 
@@ -21,7 +21,7 @@ func (s *sayServer) Hello(ctx context.Context, req *pb.Request, rsp *pb.Response
 }
 
 func TestGRPCServer(t *testing.T) {
-	r := mock.NewRegistry()
+	r := memory.NewRegistry()
 	s := NewServer(
 		server.Name("foo"),
 		server.Registry(r),
