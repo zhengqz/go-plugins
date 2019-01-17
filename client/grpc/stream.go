@@ -6,7 +6,7 @@ import (
 	"sync"
 
 	"github.com/micro/go-micro/client"
-	"github.com/micro/grpc-go"
+	"google.golang.org/grpc"
 )
 
 // Implements the streamer interface

@@ -8,12 +8,13 @@ import (
 	"github.com/micro/go-micro/codec"
 	"github.com/micro/go-micro/codec/jsonrpc"
 	"github.com/micro/go-micro/codec/protorpc"
-	"github.com/micro/grpc-go/encoding"
+	"google.golang.org/grpc/encoding"
 )
 
 type jsonCodec struct{}
 type protoCodec struct{}
 type bytesCodec struct{}
+type wrapCodec struct{ encoding.Codec }
 
 var (
 	defaultGRPCCodecs = map[string]encoding.Codec{
@@ -45,6 +46,10 @@ func UseNumber() {
 		SortMapKeys:            true,
 		ValidateJsonRawMessage: true,
 	}.Froze()
+}
+
+func (w wrapCodec) String() string {
+	return w.Codec.Name()
 }
 
 func (protoCodec) Marshal(v interface{}) ([]byte, error) {

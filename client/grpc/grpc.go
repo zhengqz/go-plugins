@@ -19,10 +19,10 @@ import (
 	"github.com/micro/go-micro/selector"
 	"github.com/micro/go-micro/transport"
 
-	"github.com/micro/grpc-go"
-	"github.com/micro/grpc-go/credentials"
-	"github.com/micro/grpc-go/encoding"
-	gmetadata "github.com/micro/grpc-go/metadata"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/encoding"
+	gmetadata "google.golang.org/grpc/metadata"
 )
 
 type grpcClient struct {
@@ -114,7 +114,7 @@ func (g *grpcClient) call(ctx context.Context, address string, req client.Reques
 	ch := make(chan error, 1)
 
 	go func() {
-		err := cc.Invoke(ctx, methodToGRPC(req.Endpoint(), req.Body()), req.Body(), rsp, grpc.CallContentSubtype(cf.Name()))
+		err := cc.Invoke(ctx, methodToGRPC(req.Endpoint(), req.Body()), req.Body(), rsp, grpc.CallContentSubtype(cf.String()))
 		ch <- microError(err)
 	}()
 
@@ -168,7 +168,7 @@ func (g *grpcClient) stream(ctx context.Context, address string, req client.Requ
 		ServerStreams: true,
 	}
 
-	st, err := cc.NewStream(ctx, desc, methodToGRPC(req.Endpoint(), req.Body()), grpc.CallContentSubtype(cf.Name()))
+	st, err := cc.NewStream(ctx, desc, methodToGRPC(req.Endpoint(), req.Body()), grpc.CallContentSubtype(cf.String()))
 	if err != nil {
 		return nil, errors.InternalServerError("go.micro.client", fmt.Sprintf("Error creating stream: %v", err))
 	}
@@ -203,7 +203,7 @@ func (g *grpcClient) maxSendMsgSizeValue() int {
 	return v.(int)
 }
 
-func (g *grpcClient) newGRPCCodec(contentType string) (encoding.Codec, error) {
+func (g *grpcClient) newGRPCCodec(contentType string) (grpc.Codec, error) {
 	codecs := make(map[string]encoding.Codec)
 	if g.opts.Context != nil {
 		if v := g.opts.Context.Value(codecsKey{}); v != nil {
@@ -211,10 +211,10 @@ func (g *grpcClient) newGRPCCodec(contentType string) (encoding.Codec, error) {
 		}
 	}
 	if c, ok := codecs[contentType]; ok {
-		return c, nil
+		return wrapCodec{c}, nil
 	}
 	if c, ok := defaultGRPCCodecs[contentType]; ok {
-		return c, nil
+		return wrapCodec{c}, nil
 	}
 	return nil, fmt.Errorf("Unsupported Content-Type: %s", contentType)
 }

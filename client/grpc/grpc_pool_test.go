@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"context"
-	"github.com/micro/grpc-go"
+	"google.golang.org/grpc"
 	pgrpc "google.golang.org/grpc"
 	pb "google.golang.org/grpc/examples/helloworld/helloworld"
 )

@@ -6,7 +6,7 @@ import (
 	"crypto/tls"
 
 	"github.com/micro/go-micro/client"
-	"github.com/micro/grpc-go/encoding"
+	"google.golang.org/grpc/encoding"
 )
 
 var (
