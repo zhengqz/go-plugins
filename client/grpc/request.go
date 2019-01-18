@@ -71,6 +71,10 @@ func (g *grpcRequest) Service() string {
 	return g.service
 }
 
+func (g *grpcRequest) Method() string {
+	return g.method
+}
+
 func (g *grpcRequest) Endpoint() string {
 	return g.method
 }

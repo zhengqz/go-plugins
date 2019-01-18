@@ -71,7 +71,12 @@ func (g *grpcClient) next(request client.Request, opts client.CallOptions) (sele
 	return next, nil
 }
 
-func (g *grpcClient) call(ctx context.Context, address string, req client.Request, rsp interface{}, opts client.CallOptions) error {
+func (g *grpcClient) call(ctx context.Context, node *registry.Node, req client.Request, rsp interface{}, opts client.CallOptions) error {
+	address := node.Address
+	if node.Port > 0 {
+		address = fmt.Sprintf("%s:%d", address, node.Port)
+	}
+
 	header := make(map[string]string)
 	if md, ok := metadata.FromContext(ctx); ok {
 		for k, v := range md {
@@ -128,7 +133,12 @@ func (g *grpcClient) call(ctx context.Context, address string, req client.Reques
 	return grr
 }
 
-func (g *grpcClient) stream(ctx context.Context, address string, req client.Request, opts client.CallOptions) (client.Stream, error) {
+func (g *grpcClient) stream(ctx context.Context, node *registry.Node, req client.Request, opts client.CallOptions) (client.Stream, error) {
+	address := node.Address
+	if node.Port > 0 {
+		address = fmt.Sprintf("%s:%d", address, node.Port)
+	}
+
 	header := make(map[string]string)
 	if md, ok := metadata.FromContext(ctx); ok {
 		for k, v := range md {
@@ -320,14 +330,8 @@ func (g *grpcClient) Call(ctx context.Context, req client.Request, rsp interface
 			return errors.InternalServerError("go.micro.client", err.Error())
 		}
 
-		// set the address
-		addr := node.Address
-		if node.Port > 0 {
-			addr = fmt.Sprintf("%s:%d", addr, node.Port)
-		}
-
 		// make the call
-		err = gcall(ctx, addr, req, rsp, callOpts)
+		err = gcall(ctx, node, req, rsp, callOpts)
 		g.opts.Selector.Mark(req.Service(), node, err)
 		return err
 	}
@@ -405,12 +409,7 @@ func (g *grpcClient) Stream(ctx context.Context, req client.Request, opts ...cli
 			return nil, errors.InternalServerError("go.micro.client", err.Error())
 		}
 
-		addr := node.Address
-		if node.Port > 0 {
-			addr = fmt.Sprintf("%s:%d", addr, node.Port)
-		}
-
-		stream, err := g.stream(ctx, addr, req, callOpts)
+		stream, err := g.stream(ctx, node, req, callOpts)
 		g.opts.Selector.Mark(req.Service(), node, err)
 		return stream, err
 	}

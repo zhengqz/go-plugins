@@ -5,6 +5,7 @@ import (
 	"context"
 	"github.com/asim/go-awsxray"
 	"github.com/micro/go-micro/client"
+	"github.com/micro/go-micro/registry"
 	"github.com/micro/go-micro/server"
 )
 
@@ -42,17 +43,17 @@ func NewCallWrapper(opts ...Option) client.CallWrapper {
 	x := newXRay(options)
 
 	return func(cf client.CallFunc) client.CallFunc {
-		return func(ctx context.Context, addr string, req client.Request, rsp interface{}, opts client.CallOptions) error {
+		return func(ctx context.Context, node *registry.Node, req client.Request, rsp interface{}, opts client.CallOptions) error {
 			var err error
 			s := getSegment(options.Name, ctx)
 
 			defer func() {
-				setCallStatus(s, addr, req.Endpoint(), err)
+				setCallStatus(s, node.Address, req.Endpoint(), err)
 				go record(x, s)
 			}()
 
 			ctx = newContext(ctx, s)
-			err = cf(ctx, addr, req, rsp, opts)
+			err = cf(ctx, node, req, rsp, opts)
 			return err
 		}
 	}
