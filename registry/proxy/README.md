@@ -16,7 +16,7 @@ go get github.com/micro/micro
 micro proxy
 ```
 
-### Import and Flag plugin
+### Import and Flag plugin
 
 ```
 import _ "github.com/micro/go-plugins/registry/proxy"
