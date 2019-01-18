@@ -1,5 +1,5 @@
-// Package sidecar is a registry plugin for the micro sidecar
-package sidecar
+// Package proxy is a registry plugin for the micro proxy
+package proxy
 
 import (
 	"bytes"
@@ -15,15 +15,15 @@ import (
 	"github.com/micro/go-micro/registry"
 )
 
-type sidecar struct {
+type proxy struct {
 	opts registry.Options
 }
 
 func init() {
-	cmd.DefaultRegistries["sidecar"] = NewRegistry
+	cmd.DefaultRegistries["proxy"] = NewRegistry
 }
 
-func configure(s *sidecar, opts ...registry.Option) error {
+func configure(s *proxy, opts ...registry.Option) error {
 	for _, o := range opts {
 		o(&s.opts)
 	}
@@ -41,22 +41,22 @@ func configure(s *sidecar, opts ...registry.Option) error {
 }
 
 func newRegistry(opts ...registry.Option) registry.Registry {
-	s := &sidecar{
+	s := &proxy{
 		opts: registry.Options{},
 	}
 	configure(s, opts...)
 	return s
 }
 
-func (s *sidecar) Init(opts ...registry.Option) error {
+func (s *proxy) Init(opts ...registry.Option) error {
 	return configure(s, opts...)
 }
 
-func (s *sidecar) Options() registry.Options {
+func (s *proxy) Options() registry.Options {
 	return s.opts
 }
 
-func (s *sidecar) Register(service *registry.Service, opts ...registry.RegisterOption) error {
+func (s *proxy) Register(service *registry.Service, opts ...registry.RegisterOption) error {
 	b, err := json.Marshal(service)
 	if err != nil {
 		return err
@@ -90,7 +90,7 @@ func (s *sidecar) Register(service *registry.Service, opts ...registry.RegisterO
 	return gerr
 }
 
-func (s *sidecar) Deregister(service *registry.Service) error {
+func (s *proxy) Deregister(service *registry.Service) error {
 	b, err := json.Marshal(service)
 	if err != nil {
 		return err
@@ -133,7 +133,7 @@ func (s *sidecar) Deregister(service *registry.Service) error {
 	return gerr
 }
 
-func (s *sidecar) GetService(service string) ([]*registry.Service, error) {
+func (s *proxy) GetService(service string) ([]*registry.Service, error) {
 	var gerr error
 	for _, addr := range s.opts.Addrs {
 		scheme := "http"
@@ -174,7 +174,7 @@ func (s *sidecar) GetService(service string) ([]*registry.Service, error) {
 	return nil, gerr
 }
 
-func (s *sidecar) ListServices() ([]*registry.Service, error) {
+func (s *proxy) ListServices() ([]*registry.Service, error) {
 	var gerr error
 	for _, addr := range s.opts.Addrs {
 		scheme := "http"
@@ -214,7 +214,7 @@ func (s *sidecar) ListServices() ([]*registry.Service, error) {
 	return nil, gerr
 }
 
-func (s *sidecar) Watch(opts ...registry.WatchOption) (registry.Watcher, error) {
+func (s *proxy) Watch(opts ...registry.WatchOption) (registry.Watcher, error) {
 	var wo registry.WatchOptions
 	for _, o := range opts {
 		o(&wo)
@@ -245,8 +245,8 @@ func (s *sidecar) Watch(opts ...registry.WatchOption) (registry.Watcher, error) 
 	return nil, gerr
 }
 
-func (s *sidecar) String() string {
-	return "sidecar"
+func (s *proxy) String() string {
+	return "proxy"
 }
 
 func NewRegistry(opts ...registry.Option) registry.Registry {
