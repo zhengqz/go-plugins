@@ -9,16 +9,16 @@ Here's a simple usage guide
 ### Run Proxy
 
 ```
+# download
 go get github.com/micro/micro
-```
 
-```
+# run
 micro proxy
 ```
 
 ### Import and Flag plugin
 
-```
+```go
 import _ "github.com/micro/go-plugins/registry/proxy"
 ```
 
