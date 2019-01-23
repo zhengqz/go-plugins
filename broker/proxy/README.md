@@ -1,27 +1,27 @@
-# Sidecar Broker
+# Proxy Broker
 
-This is a broker plugin for the micro [sidecar](https://github.com/micro/micro/tree/master/car)
+This is a broker plugin for the micro [proxy](https://micro.mu/docs/proxy.html)
 
 ## Usage
 
 Here's a simple usage guide
 
-### Run Sidecar
+### Run Proxy
 
 ```
+# install micro
 go get github.com/micro/micro
+
+# run proxy
+micro proxy
+```
+
+### Import and Flag plugin
+
+```
+import _ "github.com/micro/go-plugins/broker/proxy"
 ```
 
 ```
-micro sidecar
-```
-
-### Import and Flag plugin
-
-```
-import _ "github.com/micro/go-plugins/broker/sidecar"
-```
-
-```
-go run main.go --broker=sidecar
+go run main.go --broker=proxy
 ```
