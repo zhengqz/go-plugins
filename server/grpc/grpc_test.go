@@ -33,10 +33,6 @@ func TestGRPCServer(t *testing.T) {
 		t.Fatalf("failed to start: %v", err)
 	}
 
-	if err := s.Register(); err != nil {
-		t.Fatalf("failed to register: %v", err)
-	}
-
 	// check registration
 	services, err := r.GetService("foo")
 	if err != nil || len(services) == 0 {
@@ -44,10 +40,6 @@ func TestGRPCServer(t *testing.T) {
 	}
 
 	defer func() {
-		if err := s.Deregister(); err != nil {
-			t.Fatalf("failed to deregister: %v", err)
-		}
-
 		if err := s.Stop(); err != nil {
 			t.Fatalf("failed to stop: %v", err)
 		}

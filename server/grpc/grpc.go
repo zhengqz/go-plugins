@@ -580,12 +580,18 @@ func (g *grpcServer) Start() error {
 	g.opts.Address = ts.Addr().String()
 	g.Unlock()
 
+	// register
+	g.Register()
+
 	// micro: go ts.Accept(s.accept)
 	go g.srv.Serve(ts)
 
 	go func() {
 		// wait for exit
 		ch := <-g.exit
+
+		// deregister
+		g.Deregister()
 
 		// wait for waitgroup
 		if wait(g.opts.Context) {
