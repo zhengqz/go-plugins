@@ -96,10 +96,6 @@ func TestRateServerLimit(t *testing.T) {
 			t.Fatalf("Unexpected error starting server: %v", err)
 		}
 
-		if err := s.Register(); err != nil {
-			t.Fatalf("Unexpected error registering server: %v", err)
-		}
-
 		req := c.NewRequest(name, "Test.Method", &TestRequest{}, client.WithContentType("application/json"))
 		rsp := TestResponse{}
 
@@ -119,7 +115,6 @@ func TestRateServerLimit(t *testing.T) {
 			t.Fatalf("Expected rate limit error, got %v", err)
 		}
 
-		s.Deregister()
 		s.Stop()
 
 		// artificial test delay
