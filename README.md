@@ -22,17 +22,17 @@ Follow us on [Twitter](https://twitter.com/microhq) or join the [Slack](http://s
 
 Contents of this repository:
 
-| Directory | Description                                          |
-| --------- | ---------------------------------------------------- |
-| Broker    | PubSub messaging; NATS, NSQ, RabbitMQ, Kafka         |
-| Client    | RPC Clients; gRPC, HTTP                              |
-| Codec     | Message Encoding; BSON, Mercury                      |
-| Micro     | Micro Toolkit Plugins                                |
-| Registry  | Service Discovery; Etcd, Gossip, NATS                |
-| Selector  | Load balancing; Label, Cache, Static                 |
-| Server    | RPC Servers; gRPC, HTTP                              |
-| Transport | Bidirectional Streaming; NATS, RabbitMQ              |
-| Wrappers  | Middleware; Circuit Breakers, Rate Limiting, Tracing |
+| Directory | Description                                                     |
+| --------- | ----------------------------------------------------------------|
+| Broker    | PubSub messaging; NATS, NSQ, RabbitMQ, Kafka                    |
+| Client    | RPC Clients; gRPC, HTTP                                         |
+| Codec     | Message Encoding; BSON, Mercury                                 |
+| Micro     | Micro Toolkit Plugins                                           |
+| Registry  | Service Discovery; Etcd, Gossip, NATS                           |
+| Selector  | Load balancing; Label, Cache, Static                            |
+| Server    | RPC Servers; gRPC, HTTP                                         |
+| Transport | Bidirectional Streaming; NATS, RabbitMQ                         | 
+| Wrappers  | Middleware; Circuit Breakers, Rate Limiting, Tracing, Monitoring|
 
 ## Usage
 
