@@ -154,7 +154,7 @@ func (r *rbroker) Publish(topic string, msg *broker.Message, opts ...broker.Publ
 }
 
 func (r *rbroker) Subscribe(topic string, handler broker.Handler, opts ...broker.SubscribeOption) (broker.Subscriber, error) {
-	var successAutoAck bool
+	var ackSuccess bool
 
 	if r.stompConn == nil {
 		return nil, errors.New("not connected")
@@ -188,9 +188,9 @@ func (r *rbroker) Subscribe(topic string, handler broker.Handler, opts ...broker
 		}
 	}
 
-	if bval, ok := ctx.Value(successAutoAckKey{}).(bool); ok && bval {
+	if bval, ok := ctx.Value(ackSuccessKey{}).(bool); ok && bval {
 		bOpt.AutoAck = false
-		successAutoAck = true
+		ackSuccess = true
 	}
 
 	var ackMode stomp.AckMode
@@ -217,7 +217,7 @@ func (r *rbroker) Subscribe(topic string, handler broker.Handler, opts ...broker
 				}
 				// Handle the publication
 				err := handler(&publication{msg: msg, m: m, topic: topic, broker: r})
-				if err == nil && !bOpt.AutoAck && successAutoAck {
+				if err == nil && !bOpt.AutoAck && ackSuccess {
 					msg.Conn.Ack(msg)
 				}
 			}(msg)

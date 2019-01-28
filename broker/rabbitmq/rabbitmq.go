@@ -167,7 +167,7 @@ func (r *rbroker) Publish(topic string, msg *broker.Message, opts ...broker.Publ
 }
 
 func (r *rbroker) Subscribe(topic string, handler broker.Handler, opts ...broker.SubscribeOption) (broker.Subscriber, error) {
-	var successAutoAck bool
+	var ackSuccess bool
 
 	if r.conn == nil {
 		return nil, errors.New("not connected")
@@ -202,9 +202,9 @@ func (r *rbroker) Subscribe(topic string, handler broker.Handler, opts ...broker
 		headers = h
 	}
 
-	if bval, ok := ctx.Value(successAutoAckKey{}).(bool); ok && bval {
+	if bval, ok := ctx.Value(ackSuccessKey{}).(bool); ok && bval {
 		opt.AutoAck = false
-		successAutoAck = true
+		ackSuccess = true
 	}
 
 	fn := func(msg amqp.Delivery) {
@@ -217,7 +217,7 @@ func (r *rbroker) Subscribe(topic string, handler broker.Handler, opts ...broker
 			Body:   msg.Body,
 		}
 		err := handler(&publication{d: msg, m: m, t: msg.RoutingKey})
-		if err == nil && successAutoAck && !opt.AutoAck {
+		if err == nil && ackSuccess && !opt.AutoAck {
 			msg.Ack(false)
 		} else if err != nil && !opt.AutoAck {
 			msg.Nack(false, requeueOnError)
