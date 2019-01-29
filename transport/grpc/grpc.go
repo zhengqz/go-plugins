@@ -12,8 +12,8 @@ import (
 	mnet "github.com/micro/util/go/lib/net"
 	mls "github.com/micro/util/go/lib/tls"
 
-	"github.com/micro/grpc-go"
-	"github.com/micro/grpc-go/credentials"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 
 	pb "github.com/micro/go-plugins/transport/grpc/proto"
 )

@@ -4,7 +4,7 @@ The grpc server is a [micro.Server](https://godoc.org/github.com/micro/go-micro/
 
 ## Overview
 
-The server makes use of the [github.com/grpc/grpc-go](github.com/grpc/grpc-go) framework for the underlying server 
+The server makes use of the [google.golang.org/grpc](google.golang.org/grpc) framework for the underlying server 
 but continues to use micro handler signatures and protoc-gen-micro generated code.
 
 ## Usage

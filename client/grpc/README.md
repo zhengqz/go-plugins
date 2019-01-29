@@ -4,7 +4,7 @@ The grpc client is a [micro.Client](https://godoc.org/github.com/micro/go-micro/
 
 ## Overview
 
-The client makes use of the [github.com/grpc/grpc-go](github.com/grpc/grpc-go) framework for the underlying communication mechanism.
+The client makes use of the [google.golang.org/grpc](google.golang.org/grpc) framework for the underlying communication mechanism.
 
 ## Usage
 
