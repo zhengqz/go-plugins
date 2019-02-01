@@ -587,8 +587,30 @@ func (g *grpcServer) Start() error {
 	go g.srv.Serve(ts)
 
 	go func() {
-		// wait for exit
-		ch := <-g.exit
+		t := new(time.Ticker)
+
+		// only process if it exists
+		if g.opts.RegisterInterval > time.Duration(0) {
+			// new ticker
+			t = time.NewTicker(g.opts.RegisterInterval)
+		}
+
+		// return error chan
+		var ch chan error
+
+	Loop:
+		for {
+			select {
+			// register self on interval
+			case <-t.C:
+				if err := g.Register(); err != nil {
+					log.Log("Server register error: ", err)
+				}
+			// wait for exit
+			case ch = <-g.exit:
+				break Loop
+			}
+		}
 
 		// deregister
 		g.Deregister()
