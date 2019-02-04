@@ -12,6 +12,7 @@ type rpcRequest struct {
 	header      map[string]string
 	body        []byte
 	stream      bool
+	payload     interface{}
 }
 
 type rpcMessage struct {
@@ -50,6 +51,10 @@ func (r *rpcRequest) Read() ([]byte, error) {
 
 func (r *rpcRequest) Stream() bool {
 	return r.stream
+}
+
+func (r *rpcRequest) Body() interface{} {
+	return r.payload
 }
 
 func (r *rpcMessage) ContentType() string {
