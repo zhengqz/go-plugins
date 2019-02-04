@@ -13,7 +13,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/micro/go-log"
+	log "github.com/micro/go-log"
 	"github.com/micro/go-micro/broker"
 	"github.com/micro/go-micro/cmd"
 	"github.com/micro/go-micro/codec"
@@ -221,6 +221,7 @@ func (g *grpcServer) processRequest(stream grpc.ServerStream, service *service, 
 			contentType: ct,
 			method:      fmt.Sprintf("%s.%s", service.name, mtype.method.Name),
 			body:        b,
+			payload:     argv.Interface(),
 		}
 
 		// define the handler func
