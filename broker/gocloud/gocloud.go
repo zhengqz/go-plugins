@@ -102,9 +102,9 @@ func setupRabbit(ctx context.Context, url string) (topicOpener, subOpener, error
 	if err != nil {
 		return nil, nil, err
 	}
-	return func(name string) *pubsub.Topic { return rabbitpubsub.OpenTopic(conn, name) },
+	return func(name string) *pubsub.Topic { return rabbitpubsub.OpenTopic(conn, name, nil) },
 		func(_ *pubsub.Topic, name string) *pubsub.Subscription {
-			return rabbitpubsub.OpenSubscription(conn, name)
+			return rabbitpubsub.OpenSubscription(conn, name, nil)
 		},
 		nil
 }
