@@ -8,6 +8,7 @@ import (
 
 type durableQueueKey struct{}
 type headersKey struct{}
+type queueArgumentsKey struct{}
 type prefetchCountKey struct{}
 type prefetchGlobalKey struct{}
 type exchangeKey struct{}
@@ -29,6 +30,11 @@ func DurableExchange() broker.Option {
 // Headers adds headers used by the headers exchange
 func Headers(h map[string]interface{}) broker.SubscribeOption {
 	return setSubscribeOption(headersKey{}, h)
+}
+
+// QueueArguments sets arguments for queue creation
+func QueueArguments(h map[string]interface{}) broker.SubscribeOption {
+	return setSubscribeOption(queueArgumentsKey{}, h)
 }
 
 // RequeueOnError calls Nack(muliple:false, requeue:true) on amqp delivery when handler returns error

@@ -29,6 +29,7 @@ type subscriber struct {
 	topic        string
 	ch           *rabbitMQChannel
 	durableQueue bool
+	queueArgs    map[string]interface{}
 	r            *rbroker
 	fn           func(msg amqp.Delivery)
 	headers      map[string]interface{}
@@ -109,6 +110,7 @@ func (s *subscriber) resubscribe() {
 			s.opts.Queue,
 			s.topic,
 			s.headers,
+			s.queueArgs,
 			s.opts.AutoAck,
 			s.durableQueue,
 		)
@@ -197,6 +199,11 @@ func (r *rbroker) Subscribe(topic string, handler broker.Handler, opts ...broker
 	durableQueue := false
 	durableQueue, _ = ctx.Value(durableQueueKey{}).(bool)
 
+	var qArgs map[string]interface{}
+	if qa, ok := ctx.Value(queueArgumentsKey{}).(map[string]interface{}); ok {
+		qArgs = qa
+	}
+
 	var headers map[string]interface{}
 	if h, ok := ctx.Value(headersKey{}).(map[string]interface{}); ok {
 		headers = h
@@ -225,7 +232,7 @@ func (r *rbroker) Subscribe(topic string, handler broker.Handler, opts ...broker
 	}
 
 	sret := &subscriber{topic: topic, opts: opt, mayRun: true, r: r,
-		durableQueue: durableQueue, fn: fn, headers: headers}
+		durableQueue: durableQueue, fn: fn, headers: headers, queueArgs: qArgs}
 
 	go sret.resubscribe()
 
