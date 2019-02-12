@@ -13,6 +13,7 @@ type prefetchGlobalKey struct{}
 type exchangeKey struct{}
 type requeueOnErrorKey struct{}
 type deliveryMode struct{}
+type externalAuth struct{}
 
 // DurableQueue creates a durable queue when subscribing.
 func DurableQueue() broker.SubscribeOption {
@@ -47,6 +48,10 @@ func PrefetchGlobal() broker.Option {
 // DeliveryMode sets a delivery mode for publishing
 func DeliveryMode(value uint8) broker.PublishOption {
 	return setPublishOption(deliveryMode{}, value)
+}
+
+func ExternalAuth() broker.Option {
+	return setBrokerOption(externalAuth{}, ExternalAuthentication{})
 }
 
 type subscribeContextKey struct{}

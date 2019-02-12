@@ -21,8 +21,20 @@ var (
 	DefaultPrefetchGlobal = false
 	DefaultRequeueOnError = false
 
-	dial    = amqp.Dial
-	dialTLS = amqp.DialTLS
+	// The amqp library does not seem to set these when using amqp.DialConfig
+	// (even though it says so in the comments) so we set them manually to make
+	// sure to not brake any existing functionality
+	defaultHeartbeat = 10 * time.Second
+	defaultLocale    = "en_US"
+
+	defaultAmqpConfig = amqp.Config{
+		Heartbeat: defaultHeartbeat,
+		Locale:    defaultLocale,
+	}
+
+	dial       = amqp.Dial
+	dialTLS    = amqp.DialTLS
+	dialConfig = amqp.DialConfig
 )
 
 type rabbitMQConn struct {
@@ -67,7 +79,7 @@ func newRabbitMQConn(exchange string, urls []string, prefetchCount int, prefetch
 	return ret
 }
 
-func (r *rabbitMQConn) connect(secure bool, config *tls.Config) error {
+func (r *rabbitMQConn) connect(secure bool, config *amqp.Config) error {
 	// try connect
 	if err := r.tryConnect(secure, config); err != nil {
 		return err
@@ -83,7 +95,7 @@ func (r *rabbitMQConn) connect(secure bool, config *tls.Config) error {
 	return nil
 }
 
-func (r *rabbitMQConn) reconnect(secure bool, config *tls.Config) {
+func (r *rabbitMQConn) reconnect(secure bool, config *amqp.Config) {
 	// skip first connect
 	var connect bool
 
@@ -123,7 +135,7 @@ func (r *rabbitMQConn) reconnect(secure bool, config *tls.Config) {
 	}
 }
 
-func (r *rabbitMQConn) Connect(secure bool, config *tls.Config) error {
+func (r *rabbitMQConn) Connect(secure bool, config *amqp.Config) error {
 	r.Lock()
 
 	// already connected
@@ -161,21 +173,26 @@ func (r *rabbitMQConn) Close() error {
 	return r.Connection.Close()
 }
 
-func (r *rabbitMQConn) tryConnect(secure bool, config *tls.Config) error {
+func (r *rabbitMQConn) tryConnect(secure bool, config *amqp.Config) error {
 	var err error
 
-	if secure || config != nil || strings.HasPrefix(r.url, "amqps://") {
-		if config == nil {
-			config = &tls.Config{
+	if config == nil {
+		config = &defaultAmqpConfig
+	}
+
+	url := r.url
+
+	if secure || config.TLSClientConfig != nil || strings.HasPrefix(r.url, "amqps://") {
+		if config.TLSClientConfig == nil {
+			config.TLSClientConfig = &tls.Config{
 				InsecureSkipVerify: true,
 			}
 		}
 
-		url := strings.Replace(r.url, "amqp://", "amqps://", 1)
-		r.Connection, err = dialTLS(url, config)
-	} else {
-		r.Connection, err = dial(r.url)
+		url = strings.Replace(r.url, "amqp://", "amqps://", 1)
 	}
+
+	r.Connection, err = dialConfig(url, *config)
 
 	if err != nil {
 		return err
