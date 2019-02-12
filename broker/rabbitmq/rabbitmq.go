@@ -259,7 +259,16 @@ func (r *rbroker) Connect() error {
 	if r.conn == nil {
 		r.conn = newRabbitMQConn(r.getExchange(), r.opts.Addrs, r.getPrefetchCount(), r.getPrefetchGlobal())
 	}
-	return r.conn.Connect(r.opts.Secure, r.opts.TLSConfig)
+
+	conf := defaultAmqpConfig
+
+	if auth, ok := r.opts.Context.Value(externalAuth{}).(ExternalAuthentication); ok {
+		conf.SASL = []amqp.Authentication{&auth}
+	}
+
+	conf.TLSClientConfig = r.opts.TLSConfig
+
+	return r.conn.Connect(r.opts.Secure, &conf)
 }
 
 func (r *rbroker) Disconnect() error {
