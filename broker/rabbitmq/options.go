@@ -22,8 +22,8 @@ func DurableQueue() broker.SubscribeOption {
 }
 
 // DurableExchange is an option to set the Exchange to be durable
-func DurableExchange() broker.SubscribeOption {
-	return setSubscribeOption(durableExchange{}, true)
+func DurableExchange() broker.Option {
+	return setBrokerOption(durableExchange{}, true)
 }
 
 // Headers adds headers used by the headers exchange
