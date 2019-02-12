@@ -15,7 +15,9 @@ import (
 )
 
 var (
-	DefaultExchange       = "micro"
+	DefaultExchange = rabbitMQExchange{
+		name: "micro",
+	}
 	DefaultRabbitURL      = "amqp://guest:guest@127.0.0.1:5672"
 	DefaultPrefetchCount  = 0
 	DefaultPrefetchGlobal = false
@@ -41,7 +43,7 @@ type rabbitMQConn struct {
 	Connection      *amqp.Connection
 	Channel         *rabbitMQChannel
 	ExchangeChannel *rabbitMQChannel
-	exchange        string
+	exchange        rabbitMQExchange
 	url             string
 	prefetchCount   int
 	prefetchGlobal  bool
@@ -53,7 +55,12 @@ type rabbitMQConn struct {
 	waitConnection chan struct{}
 }
 
-func newRabbitMQConn(exchange string, urls []string, prefetchCount int, prefetchGlobal bool) *rabbitMQConn {
+type rabbitMQExchange struct {
+	name    string
+	durable bool
+}
+
+func newRabbitMQConn(exchange rabbitMQExchange, urls []string, prefetchCount int, prefetchGlobal bool) *rabbitMQConn {
 	var url string
 
 	if len(urls) > 0 && regexp.MustCompile("^amqp(s)?://.*").MatchString(urls[0]) {
@@ -62,7 +69,7 @@ func newRabbitMQConn(exchange string, urls []string, prefetchCount int, prefetch
 		url = DefaultRabbitURL
 	}
 
-	if len(exchange) == 0 {
+	if len(exchange.name) == 0 {
 		exchange = DefaultExchange
 	}
 
@@ -202,7 +209,11 @@ func (r *rabbitMQConn) tryConnect(secure bool, config *amqp.Config) error {
 		return err
 	}
 
-	r.Channel.DeclareExchange(r.exchange)
+	if r.exchange.durable {
+		r.Channel.DeclareDurableExchange(r.exchange.name)
+	} else {
+		r.Channel.DeclareExchange(r.exchange.name)
+	}
 	r.ExchangeChannel, err = newRabbitChannel(r.Connection, r.prefetchCount, r.prefetchGlobal)
 
 	return err
@@ -229,7 +240,7 @@ func (r *rabbitMQConn) Consume(queue, key string, headers amqp.Table, autoAck, d
 		return nil, nil, err
 	}
 
-	err = consumerChannel.BindQueue(queue, key, r.exchange, headers)
+	err = consumerChannel.BindQueue(queue, key, r.exchange.name, headers)
 	if err != nil {
 		return nil, nil, err
 	}

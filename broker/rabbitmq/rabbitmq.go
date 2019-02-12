@@ -163,7 +163,7 @@ func (r *rbroker) Publish(topic string, msg *broker.Message, opts ...broker.Publ
 		return errors.New("connection is nil")
 	}
 
-	return r.conn.Publish(r.conn.exchange, topic, m)
+	return r.conn.Publish(r.conn.exchange.name, topic, m)
 }
 
 func (r *rbroker) Subscribe(topic string, handler broker.Handler, opts ...broker.SubscribeOption) (broker.Subscriber, error) {
@@ -295,11 +295,19 @@ func NewBroker(opts ...broker.Option) broker.Broker {
 	}
 }
 
-func (r *rbroker) getExchange() string {
+func (r *rbroker) getExchange() rabbitMQExchange {
+
+	ex := DefaultExchange
+
 	if e, ok := r.opts.Context.Value(exchangeKey{}).(string); ok {
-		return e
+		ex.name = e
 	}
-	return DefaultExchange
+
+	if d, ok := r.opts.Context.Value(durableExchange{}).(bool); ok {
+		ex.durable = d
+	}
+
+	return ex
 }
 
 func (r *rbroker) getPrefetchCount() int {
