@@ -295,7 +295,7 @@ func NewBroker(opts ...broker.Option) broker.Broker {
 	}
 }
 
-func (r *rbroker) getExchange() rabbitMQExchange {
+func (r *rbroker) getExchange() exchange {
 
 	ex := DefaultExchange
 

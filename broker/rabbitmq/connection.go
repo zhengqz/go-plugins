@@ -15,7 +15,7 @@ import (
 )
 
 var (
-	DefaultExchange = rabbitMQExchange{
+	DefaultExchange = exchange{
 		name: "micro",
 	}
 	DefaultRabbitURL      = "amqp://guest:guest@127.0.0.1:5672"
@@ -43,7 +43,7 @@ type rabbitMQConn struct {
 	Connection      *amqp.Connection
 	Channel         *rabbitMQChannel
 	ExchangeChannel *rabbitMQChannel
-	exchange        rabbitMQExchange
+	exchange        exchange
 	url             string
 	prefetchCount   int
 	prefetchGlobal  bool
@@ -55,12 +55,12 @@ type rabbitMQConn struct {
 	waitConnection chan struct{}
 }
 
-type rabbitMQExchange struct {
+type exchange struct {
 	name    string
 	durable bool
 }
 
-func newRabbitMQConn(exchange rabbitMQExchange, urls []string, prefetchCount int, prefetchGlobal bool) *rabbitMQConn {
+func newRabbitMQConn(ex exchange, urls []string, prefetchCount int, prefetchGlobal bool) *rabbitMQConn {
 	var url string
 
 	if len(urls) > 0 && regexp.MustCompile("^amqp(s)?://.*").MatchString(urls[0]) {
@@ -69,12 +69,12 @@ func newRabbitMQConn(exchange rabbitMQExchange, urls []string, prefetchCount int
 		url = DefaultRabbitURL
 	}
 
-	if len(exchange.name) == 0 {
-		exchange = DefaultExchange
+	if len(ex.name) == 0 {
+		ex = DefaultExchange
 	}
 
 	ret := &rabbitMQConn{
-		exchange:       exchange,
+		exchange:       ex,
 		url:            url,
 		prefetchCount:  prefetchCount,
 		prefetchGlobal: prefetchGlobal,
