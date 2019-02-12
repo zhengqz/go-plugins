@@ -84,26 +84,26 @@ func (r *rabbitMQChannel) DeclareDurableExchange(exchange string) error {
 	)
 }
 
-func (r *rabbitMQChannel) DeclareQueue(queue string) error {
+func (r *rabbitMQChannel) DeclareQueue(queue string, args amqp.Table) error {
 	_, err := r.channel.QueueDeclare(
 		queue, // name
 		false, // durable
 		true,  // autoDelete
 		false, // exclusive
 		false, // noWait
-		nil,   // args
+		args,  // args
 	)
 	return err
 }
 
-func (r *rabbitMQChannel) DeclareDurableQueue(queue string) error {
+func (r *rabbitMQChannel) DeclareDurableQueue(queue string, args amqp.Table) error {
 	_, err := r.channel.QueueDeclare(
 		queue, // name
 		true,  // durable
 		false, // autoDelete
 		false, // exclusive
 		false, // noWait
-		nil,   // args
+		args,  // args
 	)
 	return err
 }

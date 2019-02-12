@@ -219,16 +219,16 @@ func (r *rabbitMQConn) tryConnect(secure bool, config *amqp.Config) error {
 	return err
 }
 
-func (r *rabbitMQConn) Consume(queue, key string, headers amqp.Table, autoAck, durableQueue bool) (*rabbitMQChannel, <-chan amqp.Delivery, error) {
+func (r *rabbitMQConn) Consume(queue, key string, headers amqp.Table, qArgs amqp.Table, autoAck, durableQueue bool) (*rabbitMQChannel, <-chan amqp.Delivery, error) {
 	consumerChannel, err := newRabbitChannel(r.Connection, r.prefetchCount, r.prefetchGlobal)
 	if err != nil {
 		return nil, nil, err
 	}
 
 	if durableQueue {
-		err = consumerChannel.DeclareDurableQueue(queue)
+		err = consumerChannel.DeclareDurableQueue(queue, qArgs)
 	} else {
-		err = consumerChannel.DeclareQueue(queue)
+		err = consumerChannel.DeclareQueue(queue, qArgs)
 	}
 
 	if err != nil {
