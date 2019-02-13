@@ -10,11 +10,10 @@ require (
 	github.com/anacrolix/utp v0.0.0-20180219060659-9e0e1d1d0572
 	github.com/asim/go-awsxray v0.0.0-20161209120537-0d8a60b6e205
 	github.com/asim/go-bson v0.0.0-20160318195205-84522947cabd
-	github.com/aws/aws-sdk-go v1.16.29
+	github.com/aws/aws-sdk-go v1.16.33
 	github.com/bwmarrin/discordgo v0.19.0
-	github.com/cenkalti/backoff v2.1.1+incompatible // indirect
 	github.com/clbanning/x2j v0.0.0-20180326210544-5e605d46809c // indirect
-	github.com/coreos/etcd v3.3.11+incompatible
+	github.com/coreos/etcd v3.3.12+incompatible
 	github.com/eclipse/paho.mqtt.golang v1.1.1
 	github.com/forestgiant/sliceutil v0.0.0-20160425183142-94783f95db6c
 	github.com/franela/goreq v0.0.0-20171204163338-bcd34c9993f8 // indirect
@@ -30,8 +29,8 @@ require (
 	github.com/micro/go-bot v0.1.0
 	github.com/micro/go-config v0.14.0
 	github.com/micro/go-log v0.1.0
-	github.com/micro/go-micro v0.25.0
-	github.com/micro/go-rcache v0.1.0
+	github.com/micro/go-micro v0.26.1
+	github.com/micro/go-rcache v0.2.1
 	github.com/micro/micro v0.23.2
 	github.com/micro/util v0.1.0
 	github.com/minio/highwayhash v0.0.0-20190131021015-02ca4b43caa3
@@ -49,17 +48,16 @@ require (
 	github.com/streadway/amqp v0.0.0-20181205114330-a314942b2fd9
 	github.com/technoweenie/multipartstreamer v1.0.1 // indirect
 	github.com/tinylib/msgp v1.1.0
-	go.etcd.io/etcd v3.3.11+incompatible
+	go.etcd.io/etcd v3.3.12+incompatible
 	go.opencensus.io v0.19.0
 	go.uber.org/ratelimit v0.0.0-20180316092928-c15da0234277
-	gocloud.dev v0.9.0
-	golang.org/x/net v0.0.0-20190206173232-65e2d4e15006
-	golang.org/x/oauth2 v0.0.0-20190130055435-99b60b757ec1
+	gocloud.dev v0.10.0
+	golang.org/x/net v0.0.0-20190213061140-3a22650c66bd
+	golang.org/x/oauth2 v0.0.0-20190212230446-3e8b2be13635
 	google.golang.org/api v0.1.0
 	google.golang.org/genproto v0.0.0-20190201180003-4b09977fb922
 	google.golang.org/grpc v1.18.0
 	gopkg.in/bsm/sarama-cluster.v2 v2.1.15
 	gopkg.in/gcfg.v1 v1.2.3 // indirect
 	gopkg.in/telegram-bot-api.v4 v4.6.4
-	gopkg.in/warnings.v0 v0.1.2 // indirect
 )
