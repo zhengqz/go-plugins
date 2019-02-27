@@ -105,6 +105,10 @@ func (g *grpcServer) configure(opts ...server.Option) {
 		gopts = append(gopts, grpc.Creds(creds))
 	}
 
+	if opts := g.getGrpcOptions(); opts != nil {
+		gopts = append(gopts, opts...)
+	}
+
 	g.srv = grpc.NewServer(gopts...)
 }
 
@@ -127,6 +131,26 @@ func (g *grpcServer) getCredentials() credentials.TransportCredentials {
 		}
 	}
 	return nil
+}
+
+func (g *grpcServer) getGrpcOptions() []grpc.ServerOption {
+	if g.opts.Context == nil {
+		return nil
+	}
+
+	v := g.opts.Context.Value(grpcOptions{})
+
+	if v == nil {
+		return nil
+	}
+
+	opts, ok := v.([]grpc.ServerOption)
+
+	if !ok {
+		return nil
+	}
+
+	return opts
 }
 
 func (g *grpcServer) handler(srv interface{}, stream grpc.ServerStream) error {

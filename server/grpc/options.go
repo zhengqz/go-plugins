@@ -10,12 +10,14 @@ import (
 	"github.com/micro/go-micro/server"
 	"github.com/micro/go-micro/server/debug"
 	"github.com/micro/go-micro/transport"
+	"google.golang.org/grpc"
 	"google.golang.org/grpc/encoding"
 )
 
 type codecsKey struct{}
 type tlsAuth struct{}
 type maxMsgSizeKey struct{}
+type grpcOptions struct{}
 
 // gRPC Codec to be used to encode/decode requests for a given content type
 func Codec(contentType string, c encoding.Codec) server.Option {
@@ -39,6 +41,16 @@ func AuthTLS(t *tls.Config) server.Option {
 			o.Context = context.Background()
 		}
 		o.Context = context.WithValue(o.Context, tlsAuth{}, t)
+	}
+}
+
+// Options to be used to configure gRPC options
+func Options(opts ...grpc.ServerOption) server.Option {
+	return func(o *server.Options) {
+		if o.Context == nil {
+			o.Context = context.Background()
+		}
+		o.Context = context.WithValue(o.Context, grpcOptions{}, opts)
 	}
 }
 
