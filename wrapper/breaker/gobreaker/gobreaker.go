@@ -52,20 +52,21 @@ func (c *clientWrapper) Call(ctx context.Context, req client.Request, rsp interf
 		return nil
 	}
 
-	switch err.(type) {
-	case *errors.Error:
-		break
-	default:
-		err = errors.New(req.Service(), err.Error(), 503)
+	merr := errors.Parse(err.Error())
+	switch {
+	case merr.Code == 0:
+		merr.Code = 503
+	case len(merr.Id) == 0:
+		merr.Id = req.Service()
 	}
 
-	if err.(*errors.Error).Code >= 500 {
+	if merr.Code >= 500 {
 		cbAllow(false)
 	} else {
 		cbAllow(true)
 	}
 
-	return err
+	return merr
 }
 
 // NewClientWrapper returns a client Wrapper.
