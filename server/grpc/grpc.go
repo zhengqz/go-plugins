@@ -618,11 +618,24 @@ func (g *grpcServer) Start() error {
 	g.opts.Address = ts.Addr().String()
 	g.Unlock()
 
-	// register
-	g.Register()
+	// connect to the broker
+	if err := config.Broker.Connect(); err != nil {
+		return err
+	}
+
+	log.Logf("Broker [%s] Listening on %s", config.Broker.String(), config.Broker.Address())
+
+	// announce self to the world
+	if err := g.Register(); err != nil {
+		log.Log("Server register error: ", err)
+	}
 
 	// micro: go ts.Accept(s.accept)
-	go g.srv.Serve(ts)
+	go func() {
+		if err := g.srv.Serve(ts); err != nil {
+			log.Log("gRPC Server start error: ", err)
+		}
+	}()
 
 	go func() {
 		t := new(time.Ticker)
@@ -650,8 +663,10 @@ func (g *grpcServer) Start() error {
 			}
 		}
 
-		// deregister
-		g.Deregister()
+		// deregister self
+		if err := g.Deregister(); err != nil {
+			log.Log("Server deregister error: ", err)
+		}
 
 		// wait for waitgroup
 		if wait(g.opts.Context) {
@@ -668,7 +683,7 @@ func (g *grpcServer) Start() error {
 		config.Broker.Disconnect()
 	}()
 
-	return config.Broker.Connect()
+	return nil
 }
 
 func (g *grpcServer) Stop() error {
