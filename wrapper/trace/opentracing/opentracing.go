@@ -23,6 +23,10 @@ func traceIntoContext(ctx context.Context, tracer opentracing.Tracer, name strin
 	if !ok {
 		md = make(map[string]string)
 	}
+
+    // copy the metadata to prevent race
+    md = metadata.Copy(md)
+	
 	var sp opentracing.Span
 	wireContext, err := tracer.Extract(opentracing.TextMap, opentracing.TextMapCarrier(md))
 	if err != nil {
