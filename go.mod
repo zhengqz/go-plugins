@@ -46,6 +46,7 @@ require (
 	github.com/sirupsen/logrus v1.3.0
 	github.com/sony/gobreaker v0.0.0-20181109014844-d928aaea92e1
 	github.com/streadway/amqp v0.0.0-20181205114330-a314942b2fd9
+	github.com/stretchr/testify v1.3.0
 	github.com/technoweenie/multipartstreamer v1.0.1 // indirect
 	github.com/tinylib/msgp v1.1.0
 	go.etcd.io/etcd v3.3.12+incompatible
@@ -57,6 +58,7 @@ require (
 	google.golang.org/api v0.1.0
 	google.golang.org/genproto v0.0.0-20190201180003-4b09977fb922
 	google.golang.org/grpc v1.18.0
+	gopkg.in/DataDog/dd-trace-go.v1 v1.10.0
 	gopkg.in/bsm/sarama-cluster.v2 v2.1.15
 	gopkg.in/gcfg.v1 v1.2.3 // indirect
 	gopkg.in/telegram-bot-api.v4 v4.6.4
