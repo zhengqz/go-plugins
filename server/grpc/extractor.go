@@ -37,6 +37,9 @@ func extractValue(v reflect.Type, d int) *registry.Value {
 			// if we can find a json tag use it
 			if tags := f.Tag.Get("json"); len(tags) > 0 {
 				parts := strings.Split(tags, ",")
+				if parts[0] == "-" || parts[0] == "omitempty" {
+					continue
+				}
 				val.Name = parts[0]
 			}
 
