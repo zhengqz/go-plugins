@@ -138,8 +138,6 @@ func TestClient(t *testing.T) {
 
 			assert.Equal(rootSpan.TraceID(), clientSpan.TraceID())
 			assert.Equal(serverSpan.Tag(tagStatus), tt.wantStatus)
-
-			// assert.Equal(serverName, serverSpan.Tag(ext.ServiceName))
 			assert.Equal("Test.Method", serverSpan.Tag(ext.ResourceName))
 			assert.Equal(rootSpan.TraceID(), serverSpan.TraceID())
 		})
