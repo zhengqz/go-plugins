@@ -19,7 +19,7 @@ func microError(err error) error {
 
 	// grpc error
 	if s, ok := status.FromError(err); ok {
-		return errors.Parse(s.Message())
+		return errors.InternalServerError("go.micro.client", s.Message())
 	}
 
 	// do nothing
