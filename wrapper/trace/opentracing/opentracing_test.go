@@ -64,6 +64,7 @@ func TestClient(t *testing.T) {
 	} {
 		t.Run(name, func(t *testing.T) {
 			tracer := mocktracer.New()
+			opentracing.SetGlobalTracer(tracer)
 
 			registry := memory.NewRegistry()
 			sel := selector.NewSelector(selector.Registry(registry))
@@ -74,7 +75,7 @@ func TestClient(t *testing.T) {
 
 			c := cli.NewClient(
 				client.Selector(sel),
-				client.WrapCall(NewCallWrapper(tracer)),
+				client.WrapCall(NewCallWrapper()),
 			)
 
 			s := srv.NewServer(
@@ -82,8 +83,8 @@ func TestClient(t *testing.T) {
 				server.Version(serverVersion),
 				server.Id(serverID),
 				server.Registry(registry),
-				server.WrapSubscriber(NewSubscriberWrapper(tracer)),
-				server.WrapHandler(NewHandlerWrapper(tracer)),
+				server.WrapSubscriber(NewSubscriberWrapper()),
+				server.WrapHandler(NewHandlerWrapper()),
 			)
 			defer s.Stop()
 
@@ -97,7 +98,7 @@ func TestClient(t *testing.T) {
 				t.Fatalf("Unexpected error starting server: %v", err)
 			}
 
-			ctx, span, err := StartSpanFromContext(context.Background(), tracer, "root")
+			ctx, span, err := StartSpanFromContext(context.Background(), "root")
 			assert.NoError(err)
 
 			req := c.NewRequest(serverName, "Test.Method", &TestRequest{IsError: tt.isError}, client.WithContentType("application/json"))
