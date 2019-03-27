@@ -14,13 +14,12 @@ import (
 )
 
 type otWrapper struct {
-	ot opentracing.Tracer
 	client.Client
 }
 
 // StartSpanFromContext returns a new span with the given operation name and options. If a span
 // is found in the context, it will be used as the parent of the resulting span.
-func StartSpanFromContext(ctx context.Context, tracer opentracing.Tracer, name string, opts ...opentracing.StartSpanOption) (context.Context, opentracing.Span, error) {
+func StartSpanFromContext(ctx context.Context, name string, opts ...opentracing.StartSpanOption) (context.Context, opentracing.Span, error) {
 	md, ok := metadata.FromContext(ctx)
 	if !ok {
 		md = make(map[string]string)
@@ -30,7 +29,7 @@ func StartSpanFromContext(ctx context.Context, tracer opentracing.Tracer, name s
 	md = metadata.Copy(md)
 
 	// find trace in go-micro metadata
-	if spanCtx, err := tracer.Extract(opentracing.TextMap, opentracing.TextMapCarrier(md)); err == nil {
+	if spanCtx, err := opentracing.GlobalTracer().Extract(opentracing.TextMap, opentracing.TextMapCarrier(md)); err == nil {
 		opts = append(opts, opentracing.ChildOf(spanCtx))
 	}
 
@@ -39,7 +38,7 @@ func StartSpanFromContext(ctx context.Context, tracer opentracing.Tracer, name s
 		opts = append(opts, opentracing.ChildOf(parentSpan.Context()))
 	}
 
-	sp := tracer.StartSpan(name, opts...)
+	sp := opentracing.GlobalTracer().StartSpan(name, opts...)
 
 	if err := sp.Tracer().Inject(sp.Context(), opentracing.TextMap, opentracing.TextMapCarrier(md)); err != nil {
 		return nil, nil, err
@@ -52,7 +51,7 @@ func StartSpanFromContext(ctx context.Context, tracer opentracing.Tracer, name s
 
 func (o *otWrapper) Call(ctx context.Context, req client.Request, rsp interface{}, opts ...client.CallOption) error {
 	name := fmt.Sprintf("%s.%s", req.Service(), req.Endpoint())
-	ctx, span, err := StartSpanFromContext(ctx, o.ot, name)
+	ctx, span, err := StartSpanFromContext(ctx, name)
 	if err != nil {
 		return err
 	}
@@ -62,7 +61,7 @@ func (o *otWrapper) Call(ctx context.Context, req client.Request, rsp interface{
 
 func (o *otWrapper) Publish(ctx context.Context, p client.Message, opts ...client.PublishOption) error {
 	name := fmt.Sprintf("Pub to %s", p.Topic())
-	ctx, span, err := StartSpanFromContext(ctx, o.ot, name)
+	ctx, span, err := StartSpanFromContext(ctx, name)
 	if err != nil {
 		return err
 	}
@@ -71,18 +70,18 @@ func (o *otWrapper) Publish(ctx context.Context, p client.Message, opts ...clien
 }
 
 // NewClientWrapper accepts an open tracing Trace and returns a Client Wrapper
-func NewClientWrapper(ot opentracing.Tracer) client.Wrapper {
+func NewClientWrapper() client.Wrapper {
 	return func(c client.Client) client.Client {
-		return &otWrapper{ot, c}
+		return &otWrapper{c}
 	}
 }
 
 // NewCallWrapper accepts an opentracing Tracer and returns a Call Wrapper
-func NewCallWrapper(ot opentracing.Tracer) client.CallWrapper {
+func NewCallWrapper() client.CallWrapper {
 	return func(cf client.CallFunc) client.CallFunc {
 		return func(ctx context.Context, node *registry.Node, req client.Request, rsp interface{}, opts client.CallOptions) error {
 			name := fmt.Sprintf("%s.%s", req.Service(), req.Endpoint())
-			ctx, span, err := StartSpanFromContext(ctx, ot, name)
+			ctx, span, err := StartSpanFromContext(ctx, name)
 			if err != nil {
 				return err
 			}
@@ -93,11 +92,11 @@ func NewCallWrapper(ot opentracing.Tracer) client.CallWrapper {
 }
 
 // NewHandlerWrapper accepts an opentracing Tracer and returns a Handler Wrapper
-func NewHandlerWrapper(ot opentracing.Tracer) server.HandlerWrapper {
+func NewHandlerWrapper() server.HandlerWrapper {
 	return func(h server.HandlerFunc) server.HandlerFunc {
 		return func(ctx context.Context, req server.Request, rsp interface{}) error {
 			name := fmt.Sprintf("%s.%s", req.Service(), req.Endpoint())
-			ctx, span, err := StartSpanFromContext(ctx, ot, name)
+			ctx, span, err := StartSpanFromContext(ctx, name)
 			if err != nil {
 				return err
 			}
@@ -108,11 +107,11 @@ func NewHandlerWrapper(ot opentracing.Tracer) server.HandlerWrapper {
 }
 
 // NewSubscriberWrapper accepts an opentracing Tracer and returns a Subscriber Wrapper
-func NewSubscriberWrapper(ot opentracing.Tracer) server.SubscriberWrapper {
+func NewSubscriberWrapper() server.SubscriberWrapper {
 	return func(next server.SubscriberFunc) server.SubscriberFunc {
 		return func(ctx context.Context, msg server.Message) error {
 			name := "Pub to " + msg.Topic()
-			ctx, span, err := StartSpanFromContext(ctx, ot, name)
+			ctx, span, err := StartSpanFromContext(ctx, name)
 			if err != nil {
 				return err
 			}
