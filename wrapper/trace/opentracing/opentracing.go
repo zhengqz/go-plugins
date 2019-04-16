@@ -73,6 +73,9 @@ func (o *otWrapper) Publish(ctx context.Context, p client.Message, opts ...clien
 // NewClientWrapper accepts an open tracing Trace and returns a Client Wrapper
 func NewClientWrapper(ot opentracing.Tracer) client.Wrapper {
 	return func(c client.Client) client.Client {
+		if ot == nil {
+			ot = opentracing.GlobalTracer()
+		}
 		return &otWrapper{ot, c}
 	}
 }
@@ -81,6 +84,9 @@ func NewClientWrapper(ot opentracing.Tracer) client.Wrapper {
 func NewCallWrapper(ot opentracing.Tracer) client.CallWrapper {
 	return func(cf client.CallFunc) client.CallFunc {
 		return func(ctx context.Context, node *registry.Node, req client.Request, rsp interface{}, opts client.CallOptions) error {
+			if ot == nil {
+				ot = opentracing.GlobalTracer()
+			}
 			name := fmt.Sprintf("%s.%s", req.Service(), req.Endpoint())
 			ctx, span, err := StartSpanFromContext(ctx, ot, name)
 			if err != nil {
@@ -96,6 +102,9 @@ func NewCallWrapper(ot opentracing.Tracer) client.CallWrapper {
 func NewHandlerWrapper(ot opentracing.Tracer) server.HandlerWrapper {
 	return func(h server.HandlerFunc) server.HandlerFunc {
 		return func(ctx context.Context, req server.Request, rsp interface{}) error {
+			if ot == nil {
+				ot = opentracing.GlobalTracer()
+			}
 			name := fmt.Sprintf("%s.%s", req.Service(), req.Endpoint())
 			ctx, span, err := StartSpanFromContext(ctx, ot, name)
 			if err != nil {
@@ -112,6 +121,9 @@ func NewSubscriberWrapper(ot opentracing.Tracer) server.SubscriberWrapper {
 	return func(next server.SubscriberFunc) server.SubscriberFunc {
 		return func(ctx context.Context, msg server.Message) error {
 			name := "Pub to " + msg.Topic()
+			if ot == nil {
+				ot = opentracing.GlobalTracer()
+			}
 			ctx, span, err := StartSpanFromContext(ctx, ot, name)
 			if err != nil {
 				return err
