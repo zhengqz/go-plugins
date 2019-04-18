@@ -418,7 +418,9 @@ func (h *grpcBroker) Publish(topic string, msg *broker.Message, opts ...broker.P
 		// check if secure is added in metadata
 		if node.Metadata["secure"] == "true" {
 			opts = append(opts, grpc.WithTransportCredentials(credentials.NewTLS(config)))
-		}
+		} else {
+                        opts = append(opts, grpc.WithInsecure())
+                }
 
 		m := &proto.Message{
 			Topic:  b.Topic,
