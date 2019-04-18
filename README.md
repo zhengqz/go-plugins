@@ -32,7 +32,7 @@ Contents of this repository:
 | Selector  | Load balancing; Label, Cache, Static                            |
 | Server    | RPC Servers; gRPC, HTTP                                         |
 | Transport | Bidirectional Streaming; NATS, RabbitMQ                         | 
-| Wrappers  | Middleware; Circuit Breakers, Rate Limiting, Tracing, Monitoring|
+| Wrapper   | Middleware; Circuit Breakers, Rate Limiting, Tracing, Monitoring|
 
 ## Usage
 
