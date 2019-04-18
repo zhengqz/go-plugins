@@ -431,9 +431,10 @@ func (h *grpcBroker) Publish(topic string, msg *broker.Message, opts ...broker.P
 
 		// dial grpc connection
 		c, err := grpc.Dial(fmt.Sprintf("%s:%d", node.Address, node.Port), opts...)
-		if err == nil {
-			return
-		}
+	        if err != nil {
+                   log.Logf(err.Error())
+                   return
+                }
 
 		// publish message
 		proto.NewBrokerClient(c).Publish(context.TODO(), m)
